@@ -136,6 +136,12 @@ g21 = mean(-data_ps1_q7$K*log(data_ps1_q7$L))
 g22 = mean(-data_ps1_q7$L*log(data_ps1_q7$L))
 G = matrix(c(g11, g12, g21, g22), ncol = 2)
 
+focs_g11 = mean(data_ps1_q7$p * data_ps1_q7$K^(focs_result_q7[1]-1) * data_ps1_q7$L^(focs_result_q7[2])*(1 + focs_result_q7[1] * log(data_ps1_q7$K)))
+focs_g12 = mean(focs_result_q7[1] * data_ps1_q7$p * data_ps1_q7$K^(focs_result_q7[1] - 1) * data_ps1_q7$L^(focs_result_q7[2]) * log(data_ps1_q7$L))
+focs_g21 = mean(focs_result_q7[2] * data_ps1_q7$p * data_ps1_q7$K^(focs_result_q7[1]) * log(data_ps1_q7$K) * data_ps1_q7$L^(focs_result_q7[2]-1))
+focs_g22 = mean(data_ps1_q7$p * data_ps1_q7$K^(focs_result_q7[1]) * data_ps1_q7$L^(focs_result_q7[2]-1) * (1 + focs_result_q7[2]*log(data_ps1_q7$L)))
+focs_G = matrix(c(focs_g11, focs_g12, focs_g21, focs_g22), ncol = 2)
+
 calculate_h = function(data) { #generates the fitted value
   h_1 = data[1]*(log(data[3]) - result_q8[1]*log(data[1]) - result_q8[2]*log(data[2]))
   h_2 = data[2]*(log(data[3]) - result_q8[1]*log(data[1]) - result_q8[2]*log(data[2]))
@@ -144,31 +150,32 @@ calculate_h = function(data) { #generates the fitted value
 }
 
 focs_calculate_h = function(data) { #generates the fitted value
-  h_1 = data[1]*(log(data[3]) - focs_result_q7[1]*log(data[1]) - focs_result_q7[2]*log(data[2]))
-  h_2 = data[2]*(log(data[3]) - focs_result_q7[1]*log(data[1]) - focs_result_q7[2]*log(data[2]))
+
+  h_1 = focs_result_q7[1] * data[3] * data[4]^(focs_result_q7[1] - 1) * data[5]^(focs_result_q7[2]) - data[1]
+  h_2 = focs_result_q7[2] * data[3] * data[4]^(focs_result_q7[1]) * data[5]^(focs_result_q7[2] - 1) - data[2]
   
   return(c(h_1, h_2))
 }
 
 h_at_fit = data.frame(calculate_h(data_ps1_q7[, 4:6]))
-focs_h_at_fit = data.frame(focs_calculate_h(data_ps1_q7[, 4:6]))
+focs_h_at_fit = data.frame(focs_calculate_h(data_ps1_q7))
 
 s11 = mean(h_at_fit$K^2) 
 s12 = mean(h_at_fit$K * h_at_fit$L)
 s21 = s12
 s22 = mean(h_at_fit$L^2)
 
-focs_s11 = mean(focs_h_at_fit$K^2) 
-focs_s12 = mean(focs_h_at_fit$K * focs_h_at_fit$L)
+focs_s11 = sum(focs_h_at_fit[1]^2)/100 
+focs_s12 = sum(focs_h_at_fit[1] * focs_h_at_fit[2])/100
 focs_s21 = focs_s12
-focs_s22 = mean(focs_h_at_fit$L^2)
+focs_s22 = sum(focs_h_at_fit[2]^2)/100
 
 S = matrix(c(s11, s12, s21, s22), ncol = 2)
 focs_S = matrix(c(focs_s11, focs_s12, focs_s21, focs_s22), ncol = 2)
 
 # Variance formula
 V = 1/100*solve(t(G) %*% G) %*% t(G) %*% S %*% G %*% solve(t(G) %*% G)
-focs_V = 1/100*solve(t(G) %*% G) %*% t(G) %*% focs_S %*% G %*% solve(t(G) %*% G)
+focs_V = 1/100*solve(t(focs_G) %*% focs_G) %*% t(focs_G) %*% focs_S %*% focs_G %*% solve(t(focs_G) %*% focs_G)
 
 print(V)
 print(focs_V)
