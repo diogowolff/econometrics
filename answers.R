@@ -96,13 +96,7 @@ focs_mme_statistic = function(param) {
 focs_result_q7 = optim(c(0,0), focs_mme_statistic, method = "BFGS")$par
 focs_result_q7 # Results: (alpha, beta) = (0.2, 0.6)
 
-# Solution 3: Using three moment conditions.
 
-### Should we present this? To be decided.
-
-# Solution 4: Using E[profit] = 0. Competitive markets hypothesis.
-
-### Should we present this? To be decided.
 
 ######
 # Q8 #
@@ -143,27 +137,27 @@ focs_g22 = mean(data_ps1_q7$p * data_ps1_q7$K^(focs_result_q7[1]) * data_ps1_q7$
 focs_G = matrix(c(focs_g11, focs_g12, focs_g21, focs_g22), ncol = 2)
 
 calculate_h = function(data) { #generates the fitted value
-  h_1 = data[1]*(log(data[3]) - result_q8[1]*log(data[1]) - result_q8[2]*log(data[2]))
-  h_2 = data[2]*(log(data[3]) - result_q8[1]*log(data[1]) - result_q8[2]*log(data[2]))
+  h_1 = data$K*(log(data$Y) - result_q8[1]*log(data$K) - result_q8[2]*log(data$L))
+  h_2 = data$L*(log(data$Y) - result_q8[1]*log(data$K) - result_q8[2]*log(data$L))
   
   return(c(h_1, h_2))
 }
 
 focs_calculate_h = function(data) { #generates the fitted value
 
-  h_1 = focs_result_q7[1] * data[3] * data[4]^(focs_result_q7[1] - 1) * data[5]^(focs_result_q7[2]) - data[1]
-  h_2 = focs_result_q7[2] * data[3] * data[4]^(focs_result_q7[1]) * data[5]^(focs_result_q7[2] - 1) - data[2]
+  h_1 = focs_result_q7[1] * data$p * data$K^(focs_result_q7[1] - 1) * data$L^(focs_result_q7[2]) - data$r
+  h_2 = focs_result_q7[2] * data$p * data$K^(focs_result_q7[1]) * data$L^(focs_result_q7[2] - 1) - data$w
   
   return(c(h_1, h_2))
 }
 
-h_at_fit = data.frame(calculate_h(data_ps1_q7[, 4:6]))
+h_at_fit = data.frame(calculate_h(data_ps1_q7))
 focs_h_at_fit = data.frame(focs_calculate_h(data_ps1_q7))
 
-s11 = mean(h_at_fit$K^2) 
-s12 = mean(h_at_fit$K * h_at_fit$L)
+s11 = mean(h_at_fit[1]^2) 
+s12 = mean(h_at_fit[1] * h_at_fit[2])
 s21 = s12
-s22 = mean(h_at_fit$L^2)
+s22 = mean(h_at_fit[2]^2)
 
 focs_s11 = sum(focs_h_at_fit[1]^2)/100 
 focs_s12 = sum(focs_h_at_fit[1] * focs_h_at_fit[2])/100
