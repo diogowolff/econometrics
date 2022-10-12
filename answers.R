@@ -3,6 +3,7 @@
 # Students: Luan Borelli and Diogo Wolff  #
 ###########################################
 
+## (!) Check LaTeX PDF document for further details on these questions.
 
 # Importing useful libraries and data.
 
@@ -27,17 +28,17 @@ mme_function = function(param) {
 
 ## Log-linearizing 
 
-mme_function_loglin = function(param) {             #function that calculates the sample value of g
+mme_function_loglin = function(param) {             # Function that calculates the sample value of g.
   sum((log(data_ps1_q6$Y) - param*log(data_ps1_q6$K) -
          (1-param)*log(data_ps1_q6$L)))/100
 }
 
-mme_function_loglin_K = function(param) {             #function that calculates the sample value of g
+mme_function_loglin_K = function(param) {             # Function that calculates the sample value of g.
   sum(data_ps1_q6$L*(log(data_ps1_q6$Y) - param*log(data_ps1_q6$K) -
                        (1-param)*log(data_ps1_q6$L)))/100
 }
 
-mme_function_loglin_L = function(param) {             #function that calculates the sample value of g
+mme_function_loglin_L = function(param) {             # Function that calculates the sample value of g.
   sum(data_ps1_q6$L*(log(data_ps1_q6$Y) - param*log(data_ps1_q6$K) -
                        (1-param)*log(data_ps1_q6$L)))/100
 }
@@ -224,7 +225,7 @@ g21 = mean(-data_ps1_q7$L*log(data_ps1_q7$K))
 g22 = mean(-data_ps1_q7$L*log(data_ps1_q7$L))
 
 # Defining the Jacobian:
-G = matrix(c(g11, g12, g21, g22), ncol = 2)
+G = matrix(c(g11, g21, g12, g22), ncol = 2)
 
 calculate_h = function(data) { # This generates the fitted values.
   h_1 = data[1]*(log(data[3]) - result_q8[1]*log(data[1]) - result_q8[2]*log(data[2]))
@@ -259,7 +260,7 @@ focs_g21 = mean(focs_result_q7[2] * data_ps1_q7$p * data_ps1_q7$K^(focs_result_q
 focs_g22 = mean(data_ps1_q7$p * data_ps1_q7$K^(focs_result_q7[1]) * data_ps1_q7$L^(focs_result_q7[2]-1) * (1 + focs_result_q7[2]*log(data_ps1_q7$L)))
 
 # Defining the Jacobian:
-focs_G = matrix(c(focs_g11, focs_g12, focs_g21, focs_g22), ncol = 2)
+focs_G = matrix(c(focs_g11, focs_g21, focs_g12, focs_g22), ncol = 2)
 
 focs_calculate_h = function(data) { # Generates the fitted value.
   
@@ -296,7 +297,8 @@ three_g31 = mean(three_eq_result_q7[2] * data_ps1_q7$p * data_ps1_q7$K^(three_eq
 three_g32 = mean(data_ps1_q7$p * data_ps1_q7$K^(three_eq_result_q7[1]) * data_ps1_q7$L^(three_eq_result_q7[2]-1) * (1 + three_eq_result_q7[2]*log(data_ps1_q7$L)))
 
 # Defining the Jacobian:
-three_G = matrix(c(three_g11, three_g12, three_g21, three_g22, three_g31, three_g32), ncol = 2)
+
+three_G = matrix(c(three_g11, three_g21, three_g31, three_g12, three_g22, three_g32), ncol = 2)
 
 three_eq_calculate_h = function(data) { # Generates the fitted values.
   
@@ -377,7 +379,27 @@ print(c("(alpha_OGMM, beta_OGMM) = ", focs_result_q10, "(FOCs approach)"))
 
 ## FULL APPROACH
 
-# Faltando.
+# Calculating the optimal weighting matrix.
+three_W = solve(three_h_S)
+
+three_value_function = function(param) { # Setting up the objetive function using the optimal weighting matrix.
+  
+  h1 = mean(log(data_ps1_q7$Y) - param[1]*log(data_ps1_q7$K)
+                             - param[2]*log(data_ps1_q7$L))
+  h2 = mean(param[1] * data_ps1_q7$p * data_ps1_q7$K^(param[1] - 1) * data_ps1_q7$L^(param[2]) - data_ps1_q7$r)
+  h3 = mean(param[2] * data_ps1_q7$p * data_ps1_q7$K^(param[1]) * data_ps1_q7$L^(param[2] - 1) - data_ps1_q7$w)
+  
+  h = c(h1, h2, h3)
+  
+  Qn = t(h) %*% three_W %*% h
+  
+  return(Qn)
+}
+
+# Minimizing the objective function. 
+three_result_q10 = optim(c(0,0), three_value_function, method = "BFGS")$par
+
+print(c("(alpha_OGMM, beta_OGMM) = ", three_result_q10, "(Full approach)"))
 
 
 
@@ -436,5 +458,5 @@ print(three_V)
 
 print(c("(alpha_OGMM, beta_OGMM) = ", result_q10, "(Naive approach)"))
 print(c("(alpha_OGMM, beta_OGMM) = ", focs_result_q10, "(FOCs approach)"))
+print(c("(alpha_OGMM, beta_OGMM) = ", three_result_q10, "(Full approach)"))
 
-# Faltando full approach.
