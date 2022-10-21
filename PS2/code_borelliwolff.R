@@ -233,14 +233,18 @@ lc_ll_plot # Adicionar legenda
 
 
 # Adicionar graficos comparando as estimates com diferentes kernels.
-
+library(tidyverse)
 tibble(q10_graph_tibble, local_constant_values) %>%
   select(age, local_constant_values, V1) %>%
-  pivot_longer(-age, names_to = 'values')
-  ggplot(aes(x=age, y=value, color = values)) + 
-  geom_line() +
+  pivot_longer(-age, names_to = 'values') %>%
+  ggplot() + 
+  geom_line(aes(x=age, y=value, linetype = values, color = values)) +
+  scale_linetype_discrete(labels = c('LC Estimator', 'LL Estimator')) +
+  scale_colour_discrete(labels = c('LC Estimator', 'LL Estimator')) +
+  labs(linetype = 'Estimators evaluated at grid points',
+       color = 'Estimators evaluated at grid points') +
   geom_segment(data = q10_graph_tibble,
-               aes(x=lowerx, xend = upperx, y=lowery, yend=uppery))
-  
-?geom_segment
+               aes(x=lowerx, xend = upperx, y=lowery, yend=uppery)) +
+  xlab('Age') + ylab('Finishing time (minutes)') +
+  theme_bw()
   
