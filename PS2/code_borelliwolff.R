@@ -8,6 +8,7 @@
 library(purrr)
 library(ggplot2)
 library(dplyr)
+library(tidyverse)
 
 
 # Importing data. 
@@ -222,19 +223,7 @@ ll_plot
 
 # Comparison plot of local-constant and local-linear estimators:
 
-lc_ll_plot <- ggplot() +
-  geom_line(data = data.frame(x0_grid_q10, local_constant_values), aes(x=x0_grid_q9, y=local_constant_values), size=1, color="blue") + 
-  geom_line(data = q10_graph_tibble, aes(x=age, y=V1), size = 1, color="red") +
-  labs(x = "Age", y  = "Finishing time (minutes)") +
-  ggtitle("Local-constant and local-linear estimators") + 
-  theme_bw() 
-
-lc_ll_plot # Adicionar legenda 
-
-
-# Adicionar graficos comparando as estimates com diferentes kernels.
-library(tidyverse)
-tibble(q10_graph_tibble, local_constant_values) %>%
+lc_ll_plot <- tibble(q10_graph_tibble, local_constant_values) %>%
   select(age, local_constant_values, V1) %>%
   pivot_longer(-age, names_to = 'values') %>%
   ggplot() + 
@@ -244,7 +233,8 @@ tibble(q10_graph_tibble, local_constant_values) %>%
   labs(linetype = 'Estimators evaluated at grid points',
        color = 'Estimators evaluated at grid points') +
   geom_segment(data = q10_graph_tibble,
-               aes(x=lowerx, xend = upperx, y=lowery, yend=uppery)) +
+               aes(x=lowerx, xend = upperx, y=lowery, yend=uppery), color="cyan") +
   xlab('Age') + ylab('Finishing time (minutes)') +
   theme_bw()
-  
+
+lc_ll_plot
