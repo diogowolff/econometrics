@@ -11,3 +11,35 @@ fast_beta_estimator = function(point) {
 }
 
 fast_betas <- lapply(x0_grid_q10, fast_beta_estimator)
+
+
+################### abaixo = rapido e funciona
+
+
+left_side_for_xi = function(xi, x0) {
+  K = K_quartic((xi-x0)/3)
+  
+  return(matrix(c(K, K*(xi-x0), K*(xi-x0), K*(xi-x0)^2), nrow=2))
+}
+
+left_side_over_all_xi = function(x0) {
+  Reduce('+', map(clean_df$age, ~ left_side_for_xi(.x, x0 = x0)))
+}
+
+right_side_for_xi = function(xi, yi, x0) {
+  K = K_quartic((xi-x0)/3)
+  
+  return(matrix(c(K*yi, K*yi*(xi-x0))))
+}
+
+right_side_over_all_xi = function(x0) {
+  Reduce('+', map2(clean_df$age, clean_df$chiptime, ~ right_side_for_xi(.x, .y, x0 = x0)))
+}
+
+somewhat_fast_beta_estimator = function(x0) {
+  solve(left_side_over_all_xi(x0)) %*% right_side_over_all_xi(x0)
+}
+
+
+beta_q10 = lapply(x0_grid_q10, somewhat_fast_beta_estimator)
+
