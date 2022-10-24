@@ -227,3 +227,12 @@ lc_ll_plot <- tibble(q10_graph_tibble, local_constant_values) %>%
   theme_bw()
 
 lc_ll_plot
+
+# Generating the table of coefficients in latex
+
+library(knitr)
+library(kableExtra)
+
+as.data.frame(matrix(unlist(betas), nrow=11, byrow = TRUE)) %>% 
+  kbl(caption = 'Marginal effect of age on finishing time',
+      format = 'latex')
