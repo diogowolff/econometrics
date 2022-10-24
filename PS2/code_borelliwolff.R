@@ -13,7 +13,7 @@ library(tidyverse)
 
 # Importing data. 
 
-df <- readRDS('PS2/adpw_2017_marathon.Rds')
+df <- readRDS('adpw_2017_marathon.Rds')
 
 
 ######
@@ -156,51 +156,40 @@ lc_plot
 # Q10 #
 #######
 
-## BE CAREFUL (or patient): in our computer this part of the cood took approximately 9 minutes to run.
+## BE CAREFUL (or patient): in our computer this part of the code took approximately 9 minutes to run.
 # Outline of the solution:
-# The idea is to calculate the two beta "factors" separately:
-# The "first_factor" function calculates (Z'KZ)^-1;
-# The "second_factor" function calculates Z'ky;
-# The "beta" function multiplies the above two factors, thus calculating a particular beta for some input age.
-# Finally, the "betas" variable uses the "beta" function above to calculate all the betas,
-# one for each grid age (20 to 70, with step 5, as requested).
+# calculate each matrix of the left and right sides, and then sum over all of them 
+# and solve the matrix multiplication
 
 x0_grid_q10 <- seq(20, 70, 5) # Defining the grid.
 
-first_factor <- function(x0_ff, h_ff) { # This function calculates (Z'KZ)^-1 for a given age and bandwidth.
-  element_ff <- function(xi, x0) {
-    zz <- as.matrix(c(1, xi - x0), ncol=1) %*% t(as.matrix(c(1, xi - x0), ncol=1))
-    K_quartic_values <-  purrr::map_dbl((xi - x0)/h_ff, K_quartic)
-    sum_element <- K_quartic_values*zz
-    return(sum_element)
-  }
+
+left_side_for_xi = function(xi, x0) {
+  K = K_quartic((xi-x0)/3)
   
-  ff <- solve(Reduce('+', lapply(clean_df$age, element_ff, x0 = x0_ff)))
-  return(ff)
+  return(matrix(c(K, K*(xi-x0), K*(xi-x0), K*(xi-x0)^2), nrow=2))
 }
 
-second_factor <- function(x0_sf, h_sf) { # This function calculates Z'ky for a given age and bandwidth. 
-  element_sf <- function(z, y, x0) {
-    zi <- as.matrix(c(1, z - x0), ncol=1)
-    K_quartic_values <-  purrr::map_dbl((z - x0)/h_sf, K_quartic)
-    yi <- y
-    sum_element <- K_quartic_values*zi*yi
-    return(sum_element)
-  }
-  sf <- Reduce('+', map2(clean_df$age, clean_df$chiptime, element_sf, x0 = x0_sf))
-  return(sf)
+left_side_over_all_xi = function(x0) {
+  Reduce('+', map(clean_df$age, ~ left_side_for_xi(.x, x0 = x0)))
+}
+
+right_side_for_xi = function(xi, yi, x0) {
+  K = K_quartic((xi-x0)/3)
+  
+  return(matrix(c(K*yi, K*yi*(xi-x0))))
+}
+
+right_side_over_all_xi = function(x0) {
+  Reduce('+', map2(clean_df$age, clean_df$chiptime, ~ right_side_for_xi(.x, .y, x0 = x0)))
+}
+
+somewhat_fast_beta_estimator = function(x0) {
+  solve(left_side_over_all_xi(x0)) %*% right_side_over_all_xi(x0)
 }
 
 
-beta <- function(x0) { # This function caculates a particular beta vector, for a given age. 
-  first_factor(x0, 3) %*% second_factor(x0, 3)
-}
-
-## CAUTION: THIS PART IS COMPUTATIONALLY BURDENSOME.
-# Finally, now we use the lapply function over the "beta" function defined above 
-# in order to calculate all the betas, one for each grid age (20 to 70, with step 5, as requested):
-
-betas <- lapply(x0_grid_q10, beta)
+betas = lapply(x0_grid_q10, somewhat_fast_beta_estimator)
 
 print(betas)
 
