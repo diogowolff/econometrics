@@ -14,7 +14,7 @@ library(kableExtra)
 
 # Importing data. 
 
-df <- readRDS('PS2/adpw_2017_marathon.Rds')
+df <- readRDS('adpw_2017_marathon.Rds')
 
 
 ######
