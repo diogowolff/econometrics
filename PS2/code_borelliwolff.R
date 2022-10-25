@@ -9,11 +9,12 @@ library(purrr)
 library(ggplot2)
 library(dplyr)
 library(tidyverse)
-
+library(knitr)
+library(kableExtra)
 
 # Importing data. 
 
-df <- readRDS('adpw_2017_marathon.Rds')
+df <- readRDS('PS2/adpw_2017_marathon.Rds')
 
 
 ######
@@ -156,10 +157,10 @@ lc_plot
 # Q10 #
 #######
 
-## BE CAREFUL (or patient): in our computer this part of the code took approximately 9 minutes to run.
+### BE CAREFUL (or patient): on our computer this part of the code took some time to run.
 # Outline of the solution:
-# calculate each matrix of the left and right sides, and then sum over all of them 
-# and solve the matrix multiplication
+# Calculate each matrix of the left and right sides, then sum over all of them 
+# and solve the matrix multiplication.
 
 x0_grid_q10 <- seq(20, 70, 5) # Defining the grid.
 
@@ -191,6 +192,7 @@ somewhat_fast_beta_estimator = function(x0) {
 
 betas = lapply(x0_grid_q10, somewhat_fast_beta_estimator)
 
+print("Coefficient vector results:")
 print(betas)
 
 
@@ -228,10 +230,7 @@ lc_ll_plot <- tibble(q10_graph_tibble, local_constant_values) %>%
 
 lc_ll_plot
 
-# Generating the table of coefficients in latex
-
-library(knitr)
-library(kableExtra)
+# Generating the table of coefficients in LaTeX:
 
 as.data.frame(matrix(unlist(betas), nrow=11, byrow = TRUE)) %>% 
   kbl(caption = 'Marginal effect of age on finishing time',
