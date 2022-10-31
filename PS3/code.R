@@ -129,7 +129,7 @@ calculates_ccps_given_t = function(alpha, alpha1, alpha2, t1, t2) {
   U_confess_t1 = alpha1*t1 + alpha2*(t1)^2
   U_confess_t2 = alpha1*t2 + alpha2*(t2)^2
   v_deny = max(U_deny_t1 + euler, U_confess_t2 + euler)
-  V_confess = U_confess_t2 + euler
+  V_confess = euler
   
   ccp_confess_t1 = exp(V_confess + U_confess_t1)/(exp(V_confess + U_confess_t1) + 
                                                     exp(v_deny + U_deny_t1))
