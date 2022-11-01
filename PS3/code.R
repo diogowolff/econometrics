@@ -117,7 +117,7 @@ library(tidymodels)
 # Loading data: 
 
 #prisoner = readRDS('C:/Users/Luan Borelli/Desktop/EPGE/Metrics/prisoner.Rds')
-prisoner = readRD('PS3/prisoner.Rds')
+prisoner = readRDS('PS3/prisoner.Rds')
 
 # Saving eulers constant:
 euler = -digamma(1)
