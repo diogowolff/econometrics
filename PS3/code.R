@@ -3,7 +3,9 @@
 # Students: Luan Borelli and Diogo Wolff  #
 ###########################################
 
-############# Q6
+######
+# Q6 #
+######
 
 # Defining Nelder-mead parameters:
 reflection <- 1
@@ -12,7 +14,7 @@ contraction <- 0.3
 shrinkage <- 0.6
 
 # Defining tolerance variables:
-max_run <- 10000 # Loop max run times.
+max_run <- 100 # Loop max run times.
 run_count <- 0 # Loop counter.
 tolerance <- 10^(-6) # Tolerance.
 tol <- 999999999999 # An initial tolerance value to be updated.
@@ -71,57 +73,60 @@ nelder_mead <- function(verts) {
     }
     run_count = run_count + 1
     tol = max(sapply(vertices,f)) - min(sapply(vertices,f))
-    print(c("Round", run_count))
+    # print(c("Round", run_count))
   }
   
-  print('Pontos:')
+  print('Minimizers (final algorithm vertices):')
   print(vertices)
-  print('Valores:')
+  print('Minimized function (value function) at each vertice:')
   print(format(sapply(vertices,f), scientific=F))
 }
 
-##############
-# RESULTADOS #
-##############
 
-# Essa função tem quatro mínimos locais idênticos e um máximo local. 
-# Vou tentar fazer o algoritmo pegar cada um desses pontos chutando diferentes vértices iniciais.
+### RESULTS
 
-# Minima examples 
-nelder_mead(list(c(-0.2, -1), c(-0.3, -0.9), c(0,-0.5))) # Pegou (3,2)
-nelder_mead(list(c(2, 3), c(7, 3), c(6,4))) # Pegou (-2.8, 3.13)
-nelder_mead(list(c(1, 7), c(2, 1), c(3,5))) # Pegou (3.58, -1.84)
-nelder_mead(list(c(-5, -4), c(-3, -2), c(-1,-4))) # Pegou (-3.77. -3.2)
+# This function has four identical local minima and one local maximum. 
+# Here I use as initial guesses three different sets of vertices. 
+# Each guess results in a different minimum point.
 
-# Maxima (NÃO CONSIGO PEGAR ESSE MÁXIMO DE JEITO NENHUM)
-nelder_mead(list(c(-0.27, -0.92), c(-0.26, -0.91), c(-0.28, -0.91))) # ... (-0.27, -0.92)
+set_1 <- list(c(-0.2, -1), c(-0.3, -0.9), c(0,-0.5))
+set_2 <- list(c(2, 3), c(7, 3), c(6,4))
+set_3 <- list(c(1, 7), c(2, 1), c(3,5))
 
-# What? Esse esquema de tolerância parece problemático, faz a função pegar uns pontos nonsense.
+# Calling the function for minimization at each of the three above sets: 
 
-nelder_mead(list(c(1, 3), c(1, 5), c(1,1))) # ???
-nelder_mead(list(c(2, 3), c(2, 3), c(1,1))) # ???
+nelder_mead(set_1) # Result: (x, y) = (3,2), f(x, y) = 0
+nelder_mead(set_2) # Result: (x, y) = (-2.8, 3.13), f(x, y) = 0
+nelder_mead(set_3) # Result: (x, y) = (3.58, -1.84), f(x, y) = 0
 
+# The other minimum point could be attained by:
+# nelder_mead(list(c(-5, -4), c(-3, -2), c(-1,-4))) # Result: (x, y) = (-3.77. -3.2), f(x, y) = 0
 
 
-########## Q7
 
-# loading used packages
+######
+# Q7 #
+######
+
+# Loading used packages: 
 
 library(tidyverse)
 library(purrr)
 library(tidymodels)
 
-prisoner = load('PS3/prisoner.Rds')
+# Loading data: 
 
-#saving eulers constant
+#prisoner = readRDS('C:/Users/Luan Borelli/Desktop/EPGE/Metrics/prisoner.Rds')
+prisoner = readRD('PS3/prisoner.Rds')
 
+# Saving eulers constant:
 euler = -digamma(1)
 
 
-# the functions below calculate the CCPs for a given set of parameters and prison times;
-# the first one calculates the formulas presented on the PDF, and the second is a wrapper
+# The functions below calculate the CCPs for a given set of parameters and prison times.
+# The first one calculates the formulas presented on the PDF, and the second is a wrapper
 # that applies the first to the dataset, and also calculates the conditional probability
-# for t = 2
+# for t = 2.
 
 calculates_ccps_given_t = function(alpha, alpha1, alpha2, t1, t2) {
   U_deny_t1 = alpha*(alpha1*10 + alpha2*100)
@@ -150,8 +155,8 @@ calculates_ccps_of_data = function(alpha, alpha1, alpha2, data) {
 
 
 
-# given the CCP functions, we calculate the log-likelihood of a given param vector
-# by applying the funcionts to every data point, and then use the standard log-lik formula
+# Given the CCP functions, we calculate the log-likelihood of a given param vector
+# by applying the functions to every data point, and then use the standard log-lik formula.
 
 log_lik_function = function(params, data) {
   confess_probabilities = do.call('rbind', map(1:1000, 
@@ -170,56 +175,53 @@ log_lik_function = function(params, data) {
 }
 
 
-# to find the estimate, we simply use a standard optimizer
-
+# To find the estimate, we simply use a standard optimizer:
 result = optim(c(1/2, -1, -0.2), log_lik_function, data = prisoner)
 
+print(result)
 
+######
+# Q8 #
+######
 
-
-############# Q8
-
-
-
-# to calculate the bootstraps, we use the bootstrap functions from tidymodels, which 
-# saves us from having to code a big wrapper to map/ from using a loop
-
-# the function below is a small wrapper designed to work for a given resample of the data
+# To calculate the bootstraps, we use the bootstrap functions from tidymodels, which 
+# saves us from having to code a big wrapper to map/ from using a loop.
+# The function below is a small wrapper designed to work for a given resample of the data.
 
 log_lik_bootstrap_estimator = function(data) {
   optim(c(1/2, -1, -0.2), log_lik_function, data = analysis(data))
 }
 
 
-# then we generate the resamples
+# Then we generate the resamples...
 
 boots = bootstraps(prisoner, times = 100)
 
-
-# and apply the minimization over every resample (TAKES A WHILE TO RUN)
+# and apply the minimization over every resample.
+# CAUTION: THIS TAKES A WHILE TO RUN. 
 
 bootstrapestimate = boots %>%
   mutate(model = map(splits, log_lik_bootstrap_estimator))
 
 
-# after that, we retrieve every coefficient estimate
+# After that, we retrieve every coefficient estimate...
 
 bootstrap_coefficients = do.call("rbind", map(1:100, ~ bootstrapestimate$model[[.x]]$par))
 
 
-# and generate the varcov matrix
+# and generate the varcov matrix:
 
 varcov = t(apply(bootstrap_coefficients, 2, scale, scale=FALSE, center=TRUE))%*%
   apply(bootstrap_coefficients, 2, scale, scale=FALSE, center=TRUE)/99
 
 
-# the estimates and variances are checked below
+# The estimates and variances are checked below,
 
 mean_est = colMeans(bootstrap_coefficients)
 sd_est = sqrt(diag(varcov))
 
 
-# as are each requested confidence intervals
+# as are each requested confidence intervals:
 
 alpha_conf_int = c(sort(bootstrap_coefficients[,1])[6], sort(bootstrap_coefficients[,1])[95])
 alpha1_conf_int = c(sort(bootstrap_coefficients[,2])[6], sort(bootstrap_coefficients[,2])[95])
