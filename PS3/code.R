@@ -184,45 +184,41 @@ print(result)
 # Q8 #
 ######
 
-# To calculate the bootstraps, we use the bootstrap functions from tidymodels, which 
-# saves us from having to code a big wrapper to map/ from using a loop.
-# The function below is a small wrapper designed to work for a given resample of the data.
 
-log_lik_bootstrap_estimator = function(data) {
-  optim(c(1/2, -1, -0.2), log_lik_function, data = analysis(data))
+# To generate bootstrap estimations, we follow the steps outlined in class,
+# creating a for loop that resamples the data, runs the estimator, and stores the
+# parameters found.
+
+B = 100
+for (b in 1:B) {
+  
+  if (b%%10==0){print(b)}
+  set.seed(500+b)
+  
+  bootsample = sample(1:1000, 1000, replace=TRUE)
+  boot.data = prisoner[bootsample,]
+  
+  bootstrap_coefficients = optim(c(1/2, -1, -0.2), log_lik_function, data = boot.data)
+  if (b==1) {boot.coef = bootstrap_coefficients$par} else
+    {boot.coef = c(boot.coef, bootstrap_coefficients$par)}
 }
 
+mat.boot = matrix(boot.coef, ncol = 3, byrow = TRUE)
 
-# Then we generate the resamples...
+# Then, we generate the varcov matrix:
 
-boots = bootstraps(prisoner, times = 100)
-
-# and apply the minimization over every resample.
-# CAUTION: THIS TAKES A WHILE TO RUN. 
-
-bootstrapestimate = boots %>%
-  mutate(model = map(splits, log_lik_bootstrap_estimator))
-
-
-# After that, we retrieve every coefficient estimate...
-
-bootstrap_coefficients = do.call("rbind", map(1:100, ~ bootstrapestimate$model[[.x]]$par))
-
-
-# and generate the varcov matrix:
-
-varcov = t(apply(bootstrap_coefficients, 2, scale, scale=FALSE, center=TRUE))%*%
-  apply(bootstrap_coefficients, 2, scale, scale=FALSE, center=TRUE)/99
+varcov = t(apply(mat.boot, 2, scale, scale=FALSE, center=TRUE))%*%
+  apply(mat.boot, 2, scale, scale=FALSE, center=TRUE)/99
 
 
 # The estimates and variances are checked below,
 
-mean_est = colMeans(bootstrap_coefficients)
+mean_est = colMeans(mat.boot)
 sd_est = sqrt(diag(varcov))
 
 
 # as are each requested confidence intervals:
 
-alpha_conf_int = c(sort(bootstrap_coefficients[,1])[6], sort(bootstrap_coefficients[,1])[95])
-alpha1_conf_int = c(sort(bootstrap_coefficients[,2])[6], sort(bootstrap_coefficients[,2])[95])
-alpha2_conf_int = c(sort(bootstrap_coefficients[,3])[6], sort(bootstrap_coefficients[,3])[95])
+alpha_conf_int = c(sort(mat.boot[,1])[6], sort(mat.boot[,1])[95])
+alpha1_conf_int = c(sort(mat.boot[,2])[6], sort(mat.boot[,2])[95])
+alpha2_conf_int = c(sort(mat.boot[,3])[6], sort(mat.boot[,3])[95])
