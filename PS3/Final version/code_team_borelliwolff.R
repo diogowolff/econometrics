@@ -107,15 +107,9 @@ nelder_mead(set_3) # Result: (x, y) = (3.58, -1.84), f(x, y) = 0
 # Q7 #
 ######
 
-# Loading used packages: 
-
-library(tidyverse)
-library(purrr)
-library(tidymodels)
 
 # Loading data: 
 
-#prisoner = readRDS('C:/Users/Luan Borelli/Desktop/EPGE/Metrics/prisoner.Rds')
 prisoner = readRDS('PS3/prisoner.Rds')
 
 # Saving eulers constant:
@@ -215,9 +209,16 @@ varcov = t(apply(mat.boot, 2, scale, scale=FALSE, center=TRUE))%*%
 mean_est = colMeans(mat.boot)
 sd_est = sqrt(diag(varcov))
 
+print(mean_est)
+print(sd_est)
 
 # as are each requested confidence intervals:
 
 alpha_conf_int = c(sort(mat.boot[,1])[6], sort(mat.boot[,1])[95])
 alpha1_conf_int = c(sort(mat.boot[,2])[6], sort(mat.boot[,2])[95])
 alpha2_conf_int = c(sort(mat.boot[,3])[6], sort(mat.boot[,3])[95])
+
+print(alpha_conf_int)
+print(alpha1_conf_int)
+print(alpha2_conf_int)
+
