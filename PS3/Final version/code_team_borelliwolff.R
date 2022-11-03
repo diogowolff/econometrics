@@ -126,7 +126,7 @@ calculates_ccps_given_t = function(alpha, alpha1, alpha2, t1, t2) {
   U_deny_t2 = alpha*(alpha1*10 + alpha2*100)
   U_confess_t1 = alpha1*t1 + alpha2*(t1)^2
   U_confess_t2 = alpha1*t2 + alpha2*(t2)^2
-  v_deny = max(U_deny_t1 + euler, U_confess_t2 + euler)
+  v_deny = alpha*euler + (1-alpha)*max(U_deny_t1 + euler, U_confess_t2 + euler)
   V_confess = euler
   
   ccp_confess_t1 = exp(V_confess + U_confess_t1)/(exp(V_confess + U_confess_t1) + 
@@ -153,8 +153,8 @@ calculates_ccps_of_data = function(alpha, alpha1, alpha2, data) {
 
 log_lik_function = function(params, data) {
   confess_probabilities = do.call('rbind', purrr::map(1:1000, 
-                                               ~ calculates_ccps_of_data(params[1], params[2], params[3], 
-                                                                         data[.x,])))
+                                                      ~ calculates_ccps_of_data(params[1], params[2], params[3], 
+                                                                                data[.x,])))
   
   df_with_probabilities = cbind(data, confess_probabilities)
   
@@ -174,9 +174,9 @@ result = optim(c(1/2, -1, -0.2), log_lik_function, data = prisoner)
 print(result)
 
 # Estimated results:
-# alpha = 0.15655623
-# alpha_1 = -3.56879369
-# alpha_2 = -0.08882856
+# alpha = 0.3299922
+# alpha_1 = -5.4647820
+# alpha_2 = 0.2593548
 
 ######
 # Q8 #
@@ -198,7 +198,7 @@ for (b in 1:B) {
   
   bootstrap_coefficients = optim(c(1/2, -1, -0.2), log_lik_function, data = boot.data)
   if (b==1) {boot.coef = bootstrap_coefficients$par} else
-    {boot.coef = c(boot.coef, bootstrap_coefficients$par)}
+  {boot.coef = c(boot.coef, bootstrap_coefficients$par)}
 }
 
 mat.boot = matrix(boot.coef, ncol = 3, byrow = TRUE)
