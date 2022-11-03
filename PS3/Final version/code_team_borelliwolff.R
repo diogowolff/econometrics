@@ -152,7 +152,7 @@ calculates_ccps_of_data = function(alpha, alpha1, alpha2, data) {
 # by applying the functions to every data point, and then use the standard log-lik formula.
 
 log_lik_function = function(params, data) {
-  confess_probabilities = do.call('rbind', map(1:1000, 
+  confess_probabilities = do.call('rbind', purrr::map(1:1000, 
                                                ~ calculates_ccps_of_data(params[1], params[2], params[3], 
                                                                          data[.x,])))
   
@@ -172,6 +172,11 @@ log_lik_function = function(params, data) {
 result = optim(c(1/2, -1, -0.2), log_lik_function, data = prisoner)
 
 print(result)
+
+# Estimated results:
+# alpha = 0.15655623
+# alpha_1 = -3.56879369
+# alpha_2 = -0.08882856
 
 ######
 # Q8 #
