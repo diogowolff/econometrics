@@ -61,3 +61,4 @@ twols = lm(LWAGE ~ -1 + EXP + EXP2 + UNION + WKS + MS + OCC + SOUTH + SMSA + IND
            data = data_twoways)
 
 summary(twols)
+
