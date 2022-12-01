@@ -3,7 +3,7 @@ library(dplyr)
 library(plm)
 library(stargazer)
 
-setwd('C:/Users/Luan Borelli/Desktop/EPGE/Metrics/2nd part/PS1/PS1')
+setwd(this.path::here())
 raw_df <- read.csv("WAGES_PSID1976-1982_IDs.csv")
 
 # We are interested in the following specifiction
@@ -78,19 +78,19 @@ within_estimation_check
 
 # From scratch: 
 
-mean_data = df %>% mutate(EXP2 = EXP^2) %>%
+mean_data = df %>%
   group_by(ID) %>%
   summarise(across(everything(), mean))
 
 between_reg = lm(LWAGE ~ EXP + EXP2 + UNION + WKS + MS + OCC + SOUTH + SMSA + IND + BLK + FEM + ED, data = mean_data)
 
-sigma_est = sqrt(1/(4165-595-10)*sum(reg$residuals^2))
+sigma_est = sqrt(1/(4165-595-10)*sum(within_estimation$residuals^2))
 sigma_bet_est = sqrt(1/595*sum(between_reg$residuals^2))
 sigma_u_est = max(0, sigma_bet_est^2 - sigma_est^2/7)
 
 rho = sigma_est/sqrt(sigma_est^2 + 7*sigma_u_est)
 
-gls_data = data %>% mutate(EXP2 = EXP^2) %>%
+gls_data = df %>%
   group_by(ID) %>%
   mutate_all(funs(. - (1-rho)*mean(.)))
 
@@ -107,7 +107,9 @@ random_effects_estimation <- plm(LWAGE ~ EXP + EXP2 + UNION + WKS + MS + OCC + S
 random_effects_estimation
 summary(random_effects_estimation)
 
-# As it can be seen, the results are the same (up to numerical approximations).
+# As it can be seen, the results are the same (up to numerical approximations). 
+# A puzzle: it seems that the intercept estimated is very different, which seems odd given that 
+# all other coefficients are near equal between coding methods.
 
 
 #####
