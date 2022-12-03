@@ -1,6 +1,7 @@
 library(tidyverse)
 library(ggplot2)
 library(RANN)
+library(dotwhisker)
 
 setwd(this.path::here())
 
@@ -202,3 +203,89 @@ match_did_nn_estimator(6, common_support_df)
 match_did_kernel_estimator(4, common_support_df)
 match_did_kernel_estimator(5, common_support_df)
 match_did_kernel_estimator(6, common_support_df)
+
+
+
+
+
+
+
+################### q2
+
+
+df2 = read_csv('enoe_q219-q122_married_female.csv')
+
+glimpse(df2)
+
+
+# a)
+table(df2$time)
+df2_aug = df2 %>% mutate(event = time - 4,
+                         Dm3 = ifelse(event == -3, 1, 0),
+                         Dm2 = ifelse(event == -2, 1, 0),
+                         Dm1 = ifelse(event == -1, 1, 0),
+                         D0 = ifelse(event == 0, 1, 0),
+                         D1 = ifelse(event == 1, 1, 0),
+                         D2 = ifelse(event == 2, 1, 0),
+                         D3 = ifelse(event == 3, 1, 0),
+                         D4 = ifelse(event == 4, 1, 0),
+                         D5 = ifelse(event == 5, 1, 0),
+                         D6 = ifelse(event == 6, 1, 0),
+                         D7 = ifelse(event == 7, 1, 0),
+                         edusq = edu^2)
+
+glimpse(df2_aug)
+
+
+# b)
+
+data_reg = df2_aug %>% select(-c(quarter, ent, Dm1, event,
+                                 time, newid, dmarr))
+           
+data_unemp = data_reg %>% select(-c(formal_new, informal_new, inact))
+  
+reg_unemp = lm(unemp ~ ., data_unemp)
+
+broom::tidy(reg_unemp) %>% filter(str_detect(term, 'D')) %>% dwplot()
+
+
+# unemployment shoots up right after covid and then goes down
+
+
+data_inac = data_reg %>% select(-c(formal_new, informal_new, unemp))
+
+reg_inac = lm(inact ~ ., data_inac)
+
+broom::tidy(reg_inac) %>% filter(str_detect(term, 'D')) %>% dwplot()
+
+
+# inactivity shoots up after covid and takes a while to come back down
+
+
+data_formal_emp = data_reg %>% select(-c(inact, informal_new, unemp))
+
+reg_form = lm(formal_new ~., data_formal_emp)
+
+broom::tidy(reg_form) %>% filter(str_detect(term, 'D')) %>% dwplot()
+
+
+# formal employment is hit and stays down in the sample
+
+
+
+data_inform = data_reg %>% select(-c(inact, formal_new, unemp))
+
+reg_infor = lm(informal_new ~ ., data_inform)
+
+broom::tidy(reg_infor) %>% filter(str_detect(term, 'D')) %>% dwplot()
+
+
+# informal employment is hit but quickly recovers; it seems that the recovery
+# in unemployment and activity level is driven by informal employment only
+
+
+
+# c)
+
+# the event variable is already a quarter-specific fixed effect, so there's no point
+# adding another one.
