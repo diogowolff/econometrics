@@ -79,27 +79,27 @@ ggplot(df_itemc, aes(x = qtr, y = mean, color = as.factor(d) )) + geom_line(line
 
 
 match_did_nn_estimator = function(timeframe, data) {
-  post_vec = 1:timeframe
+  post_vec = 1:timeframe        #generate the array of necessary observations
   pre_vec = -post_vec
   
-  valid_indexes_post = data %>% filter(qtr %in% post_vec) %>%
+  valid_indexes_post = data %>% filter(qtr %in% post_vec) %>%  #check if this id has a valid post 
+    select(id) %>% unique()                                   # observation
+  
+  valid_indexes_pre = data %>% filter(qtr %in% pre_vec) %>%   # the same but for before treatment
     select(id) %>% unique()
   
-  valid_indexes_pre = data %>% filter(qtr %in% pre_vec) %>%
-    select(id) %>% unique()
+  valid_indexes = intersect(valid_indexes_post, valid_indexes_pre) %>% unlist() #get ids with both
   
-  valid_indexes = intersect(valid_indexes_post, valid_indexes_pre) %>% unlist()
-  
-  df_itemd = data %>% filter(id %in% valid_indexes) %>%
-    filter(qtr>= -timeframe) %>% filter(qtr <= timeframe) %>%
-    mutate(post = ifelse(qtr > 0, "post", "pre")) %>%
+  df_itemd = data %>% filter(id %in% valid_indexes) %>%        # get only correct ids
+    filter(qtr>= -timeframe) %>% filter(qtr <= timeframe) %>%     #get only relevant obs from them
+    mutate(post = ifelse(qtr > 0, "post", "pre")) %>%           # split data into pre and post treat
     group_by(post, id) %>%
-    mutate(mean = mean(earn)) %>% slice(1) %>%
-    ungroup() %>%
-    select(id, d, mean, p, post) %>%
+    mutate(mean = mean(earn)) %>% slice(1) %>%       #calculate average per id per pre/post treat
+    ungroup() %>%                                    # then convert the df into a table with only
+    select(id, d, mean, p, post) %>%                 # id, treatment status, and avg before/after treat
     pivot_wider(names_from = post, values_from = mean) %>%
-    mutate(diff_in_means = post-pre) %>%
-    select(-c(post, pre))
+    mutate(diff_in_means = post-pre) %>%            # calculate difference in means for each ind
+    select(-c(post, pre))                           # drop unnecessary variables
   
   
   score_control = df_itemd[df_itemd$d == 0, ]   # i generate which is which to get the
