@@ -74,75 +74,101 @@ ggplot(df_itemc, aes(x = qtr, y = mean, color = as.factor(d) )) + geom_line(line
 
 
 
-# first observation: in order to subtract individual by individual, i need to select only 
-# those in the sample that have both data before and after the intervention
-
-
-# IMPORTANT!!!! THIS MATCHES PEOPLE WHO MIGHT GET CUT WHEN LOOKING AT T=4 OR 5
-# WE MUST CHANGE THE DF GENERATION TO BE DEPENDENT ON TIMEFRAME
-# DOING THAT WE WILL NOT NEED ALL THE OTHER FILTERS I THINK
-
-
-df_itemd = df %>% group_by(id) %>% summarise(max = max(qtr),
-                                                        min = min(qtr)) %>%
-  mutate(bool = ifelse(max*min < 0, 1, 0)) %>%   # this checks if there's a positive and a negative
-  right_join(df) %>%                             # quarter in the data, for every id
-  filter(bool == 1) %>%
-  select(-c(bool, max, min))
-
-
-
 # 2-NN estimator
 
-score_control = df_itemd[df_itemd$d == 0, ]     # i generate which is which to get the
-score_treatment =  df_itemd[df_itemd$d == 1, ]  # nearest neighbors using RANN
 
-nn_indexes = nn2(score_control$p, score_treatment$p, k = 2)
-df_nn = as.data.frame(nn_indexes$nn.idx)
-
-
-nn_did_estimator = function(timeframe) {
+match_did_nn_estimator = function(timeframe, data) {
+  post_vec = 1:timeframe
+  pre_vec = -post_vec
   
-  # given a timeframe, we (for example) take the treatment data that is after treat,
-  # subset it to data that is in the timeframe, then calculate the mean for did
+  valid_indexes_post = data %>% filter(qtr %in% post_vec) %>%
+    select(id) %>% unique()
   
-  yt_t1 = score_treatment[score_treatment$qtr > 0,] %>% filter(abs(qtr) <= timeframe) %>%
-    group_by(id) %>% summarise(mean = mean(earn))
-  yt_t0 = score_treatment[score_treatment$qtr < 0,] %>% filter(abs(qtr) <= timeframe) %>%
-    group_by(id) %>% summarise(mean = mean(earn))
+  valid_indexes_pre = data %>% filter(qtr %in% pre_vec) %>%
+    select(id) %>% unique()
   
-  yc_t1 = score_control[score_control$qtr > 0,] %>% filter(abs(qtr) <= timeframe) %>%
-    group_by(id) %>% summarise(mean = mean(earn))
-  yc_t0 = score_control[score_control$qtr < 0,] %>% filter(abs(qtr) <= timeframe) %>%
-    group_by(id) %>% summarise(mean = mean(earn))
+  valid_indexes = intersect(valid_indexes_post, valid_indexes_pre) %>% unlist()
   
-  # we then join all this data in the original dataframe to get the dataset with 
-  # differences for every individual
-  # this dataset contains the mean earn for ind. at t1 and t0, whether he's C or T
-  y = df_itemd %>% left_join(yt_t1, by = 'id') %>% 
-    left_join(yt_t0, by = 'id') %>% left_join(yc_t1, by = 'id') %>% 
-    left_join(yc_t0, by = 'id') %>% filter(rowMeans(is.na(.)) < 0.5) %>%
-    rename('yt_t1' = mean.x, 'yt_t0' = mean.y, 'yc_t1' = mean.x.x, 'yc_t0' = mean.y.y) %>%
-    mutate(yt_diff = yt_t1 - yt_t0,
-           yc_diff = yc_t1 - yc_t0)
+  df_itemd = data %>% filter(id %in% valid_indexes) %>%
+    filter(qtr>= -timeframe) %>% filter(qtr <= timeframe) %>%
+    mutate(post = ifelse(qtr > 0, "post", "pre")) %>%
+    group_by(post, id) %>%
+    mutate(mean = mean(earn)) %>% slice(1) %>%
+    ungroup() %>%
+    select(id, d, mean, p, post) %>%
+    pivot_wider(names_from = post, values_from = mean) %>%
+    mutate(diff_in_means = post-pre) %>%
+    select(-c(post, pre))
   
   
-  # given the NN we found, we rearrange the control dataset accordingly to the match
-  # in treatment data, then join with all the data and get the yc_diff in the correct order
+  score_control = df_itemd[df_itemd$d == 0, ]   # i generate which is which to get the
+  score_treatment =  df_itemd[df_itemd$d == 1, ]  # nearest neighbors using RANN
   
-  nn1 = score_control[df_nn$V1,] %>% left_join(y) %>% select(yc_diff)
-  nn2 = score_control[df_nn$V2,] %>% left_join(y) %>% select(yc_diff)
-
+  nn_indexes = nn2(score_control$p, score_treatment$p, k = 2)
+  df_nn = as.data.frame(nn_indexes$nn.idx)
   
-  # we now have the vector of yt diffs and the vector of yc diffs all in the right order
-  # so just apply the formula with weight 1/2 for each neighbour and 0 otherwise (just a mean really)
+  control_diff = (score_control[df_nn$V1, 'diff_in_means'] + score_control[df_nn$V2, 'diff_in_means'])/2
   
-  alpha = sum(y[y$d == 1, 'yt_diff'] - (nn1+nn2)/2, na.rm = T)/nrow(y)
+  alpha = colMeans(score_treatment$diff_in_means - control_diff)
   
   return(alpha)
 }
 
-nn_did_estimator(6)
+match_did_nn_estimator(4, df)
+match_did_nn_estimator(5, df)
+match_did_nn_estimator(6, df)
+
+
+
+
+# kernel matching
+
+epanechnikov = function(z) {0.75*(1-z^2)*as.numeric(abs(z)<1)}
+
+match_did_kernel_estimator = function(timeframe, data) {
+  post_vec = 1:timeframe
+  pre_vec = -post_vec
+  
+  valid_indexes_post = data %>% filter(qtr %in% post_vec) %>%
+    select(id) %>% unique()
+  
+  valid_indexes_pre = data %>% filter(qtr %in% pre_vec) %>%
+    select(id) %>% unique()
+  
+  valid_indexes = intersect(valid_indexes_post, valid_indexes_pre) %>% unlist()
+  
+  df_itemd = data %>% filter(id %in% valid_indexes) %>%
+    filter(qtr>= -timeframe) %>% filter(qtr <= timeframe) %>%
+    mutate(post = ifelse(qtr > 0, "post", "pre")) %>%
+    group_by(post, id) %>%
+    mutate(mean = mean(earn)) %>% slice(1) %>%
+    ungroup() %>%
+    select(id, d, mean, p, post) %>%
+    pivot_wider(names_from = post, values_from = mean) %>%
+    mutate(diff_in_means = post-pre) %>%
+    select(-c(post, pre))
+  
+  
+  score_control = df_itemd[df_itemd$d == 0, ]   # i generate which is which to get the
+  score_treatment =  df_itemd[df_itemd$d == 1, ]  #
+  
+  
+  combinations = expand.grid(score_treatment$p, score_control$p)
+  h = 2.345*nrow(df_itemd)^(-1/5)*sd(df_itemd$p)
+  
+  Kern_mat = matrix(epanechnikov((combinations[, 2] - combinations[, 1])/h), nrow = nrow(score_treatment))
+  W_mat = apply(Kern_mat, 2, function(i) i/sum(i))
+  
+  alpha = colMeans(score_treatment$diff_in_means - W_mat %*% score_control$diff_in_means)
+  
+  return(alpha)
+}
+
+match_did_kernel_estimator(4, df)
+match_did_kernel_estimator(5, df)
+match_did_kernel_estimator(6, df)
+
+
 
 
 
@@ -153,10 +179,26 @@ nn_did_estimator(6)
 df %>% ggplot(aes(x = p, group = d)) + 
   geom_density() + facet_wrap(~d)
 
-range_control = c(min(score_control), max(score_control))
+control_p = df %>% filter(d == 0) %>% select(p)
+control_t = df %>% filter(d == 1) %>% select(p)
 
-range_treatment = c(min(score_treatment), max(score_treatment))
+range_control = c(min(control_p), max(control_p))
+range_treatment = c(min(control_t), max(control_t))
 
-lower_bound_score = max(min(score_control), min(score_treatment))
-upper_bound_score = min(max(score_control), max(score_treatment))
+lower_bound_score = max(min(control_p), min(control_t))
+upper_bound_score = min(max(control_p), max(control_t))
 
+
+
+
+# f)
+
+common_support_df = df %>% filter(between(p, lower_bound_score, upper_bound_score))
+
+match_did_nn_estimator(4, common_support_df)
+match_did_nn_estimator(5, common_support_df)
+match_did_nn_estimator(6, common_support_df)
+
+match_did_kernel_estimator(4, common_support_df)
+match_did_kernel_estimator(5, common_support_df)
+match_did_kernel_estimator(6, common_support_df)
