@@ -114,6 +114,7 @@ ggplot(df_itemc, aes(x = qtr, y = mean, color = as.factor(d) )) + geom_line(line
 
 # 2-NN estimator
 
+
 match_did_nn_estimator = function(timeframe, data) {
   post_vec = 1:timeframe        # Generate the array of necessary observations.
   pre_vec = -post_vec
@@ -130,13 +131,12 @@ match_did_nn_estimator = function(timeframe, data) {
     filter(qtr>= -timeframe) %>% filter(qtr <= timeframe) %>%  # Get only relevant obs from them.
     mutate(post = ifelse(qtr > 0, "post", "pre")) %>%          # Split data into pre and post treat.
     group_by(post, id) %>%
-    mutate(mean = mean(earn)) %>% slice(1) %>%       # Calculate average per id per pre/post treat,
+    mutate(mean = mean(earn)) %>% slice(1) %>%     # Calculate average per id per pre/post treat,
     ungroup() %>%                                    # then convert the df into a table with only
     select(id, d, mean, p, post) %>%                 # id, treatment status, and avg before/after treat.
     pivot_wider(names_from = post, values_from = mean) %>%
     mutate(diff_in_means = post-pre) %>%            # Calculate difference in means for each ind.
     select(-c(post, pre))                           # Drop unnecessary variables.
-  
   
   score_control = df_itemd[df_itemd$d == 0, ]   # i generate which is which to get the
   score_treatment =  df_itemd[df_itemd$d == 1, ]  # nearest neighbors using RANN
@@ -158,6 +158,72 @@ did_nn_6 <- match_did_nn_estimator(6, df)
 did_nn_4 
 did_nn_5 
 did_nn_6
+
+
+
+
+match_did_nn_graph = function(timeframe, data) {
+  post_vec = 1:timeframe        # Generate the array of necessary observations.
+  pre_vec = -post_vec
+  
+  valid_indexes_post = data %>% filter(qtr %in% post_vec) %>%  # Check if this ID has a valid post 
+    select(id) %>% unique()                                    # observation.
+  
+  valid_indexes_pre = data %>% filter(qtr %in% pre_vec) %>%   # The same, but for before treatment.
+    select(id) %>% unique()
+  
+  valid_indexes = intersect(valid_indexes_post, valid_indexes_pre) %>% unlist() # Get IDs with both.
+  
+  df_itemd = data %>% filter(id %in% valid_indexes) %>%        # Get only correct IDs.
+    filter(qtr>= -timeframe) %>% filter(qtr <= timeframe) %>%  # Get only relevant obs from them.
+    mutate(post = ifelse(qtr > 0, "post", "pre"))
+  
+  score_control = df_itemd[df_itemd$d == 0, ] # i generate which is which to get the
+  score_treatment =  df_itemd[df_itemd$d == 1, ]  # nearest neighbors using RANN
+  
+  nn_indexes = nn2(score_control$p, score_treatment$p, k = 2)
+  df_nn = as.data.frame(nn_indexes$nn.idx)
+  
+  df_with_match = tibble(score_treatment, id1 = score_control[df_nn$V1, ]$id, 
+                         id2 = score_control[df_nn$V2, ]$id) %>%
+    left_join(select(score_control, c('id', 'earn', 'qtr')), by = c("id1" = "id", "qtr")) %>%
+    left_join(select(score_control, c('id', 'earn', 'qtr')), by = c("id2" = "id", "qtr")) %>%
+    mutate(earn_control = earn.y + earn)
+  
+  match_control = df_with_match %>% select(id, qtr, earn_control) %>%
+    mutate(d=0) %>% rename('earn' = earn_control)
+    
+  graph_df = score_treatment %>% select(id, qtr, d, earn) %>% rbind(match_control) %>%
+    group_by(qtr, d) %>% summarise(mean = mean(earn, na.rm = T)) %>%
+    mutate(post = ifelse(qtr>0, 1, 0))
+  
+  
+  ggplot(graph_df, aes(x = qtr, y = mean, color = as.factor(d) )) + geom_line(linetype = 'dashed') +
+    geom_line(data = graph_df[graph_df$qtr <= -1, ], aes(x = qtr, y = mean, color =
+                                                           as.factor(d)), size = 1.1) +
+    geom_line(data = graph_df[graph_df$qtr >= 1, ], aes(x = qtr, y = mean, color =
+                                                          as.factor(d)), size = 1.1) +
+    labs(color = 'Treatment Status') +
+    geom_vline(xintercept = 0, linetype = 'dashed', alpha=0.5) + 
+    annotate(geom = "text", x = -0.3, y = 750, label = "TREATMENT ASSIGNMENT", color = "black", alpha=0.5,
+             angle = 90) + 
+    theme_bw() + scale_color_brewer(palette="Paired") + 
+    ggtitle("Mean earnings per quarter for treated and non-treated individuals")
+  
+}
+
+
+
+match_did_nn_graph(6, df)
+
+
+
+
+
+
+
+
+
 
 
 # Kernel matching
@@ -359,4 +425,4 @@ broom::tidy(reg_infor) %>% filter(str_detect(term, 'D')) %>% dwplot(dot_args= li
 ### (c)
 
 # the event variable is already a quarter-specific fixed effect, so there's no point
-# adding another one.
+# adding another one. this is specific to this example.
