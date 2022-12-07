@@ -229,7 +229,8 @@ match_did_nn_graph(6, df)
 # Kernel matching
 
 epanechnikov = function(z) {0.75*(1-z^2)*as.numeric(abs(z)<1)}
-
+timeframe = 4
+data = df
 match_did_kernel_estimator = function(timeframe, data) {
   post_vec = 1:timeframe
   pre_vec = -post_vec
@@ -259,12 +260,15 @@ match_did_kernel_estimator = function(timeframe, data) {
   
   
   combinations = expand.grid(score_treatment$p, score_control$p)
-  h = 2.345*nrow(df_itemd)^(-1/5)*sd(df_itemd$p)
+  h = .9*nrow(score_control)^(-1/5)*sd(score_control$p)
   
   Kern_mat = matrix(epanechnikov((combinations[, 2] - combinations[, 1])/h), nrow = nrow(score_treatment))
-  W_mat = apply(Kern_mat, 2, function(i) i/sum(i))
+  W_mat = t(apply(Kern_mat, 1, function(i) i/sum(i)))
   
-  alpha = colMeans(score_treatment$diff_in_means - W_mat %*% score_control$diff_in_means)
+  index_of_treat_with_near_controls = !is.na(W_mat[, 1])
+  
+  alpha = mean(score_treatment$diff_in_means[index_of_treat_with_near_controls] - 
+                 (W_mat %*% score_control$diff_in_means)[index_of_treat_with_near_controls])
   
   return(alpha)
 }
