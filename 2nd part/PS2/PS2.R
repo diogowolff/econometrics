@@ -114,7 +114,6 @@ ggplot(df_itemc, aes(x = qtr, y = mean, color = as.factor(d) )) + geom_line(line
 
 # 2-NN estimator
 
-
 match_did_nn_estimator = function(timeframe, data) {
   post_vec = 1:timeframe        # Generate the array of necessary observations.
   pre_vec = -post_vec
@@ -159,8 +158,7 @@ did_nn_4
 did_nn_5 
 did_nn_6
 
-
-
+# Generating a plot similar to that of item (c), but for the 2-NN estimator.
 
 match_did_nn_graph = function(timeframe, data) {
   post_vec = 1:timeframe        # Generate the array of necessary observations.
@@ -208,22 +206,11 @@ match_did_nn_graph = function(timeframe, data) {
     annotate(geom = "text", x = -0.3, y = 750, label = "TREATMENT ASSIGNMENT", color = "black", alpha=0.5,
              angle = 90) + 
     theme_bw() + scale_color_brewer(palette="Paired") + 
-    ggtitle("Mean earnings per quarter for treated and non-treated individuals")
+    ggtitle("Mean earnings per quarter for treated and non-treated individuals (MDID 2-NN Estimator)")
   
 }
 
-
-
-match_did_nn_graph(6, df)
-
-
-
-
-
-
-
-
-
+match_did_nn_graph(6, df) # Plot
 
 
 # Kernel matching
@@ -322,6 +309,9 @@ did_kernel_cs_6 <- match_did_kernel_estimator(6, common_support_df)
 did_kernel_cs_4
 did_kernel_cs_5
 did_kernel_cs_6
+
+# Plotting a similar plot to that of item (c), but for the 2-NN estimator with common support.
+match_did_nn_graph(6, common_support_df) # Plot
 
 ######
 # Q2 #
