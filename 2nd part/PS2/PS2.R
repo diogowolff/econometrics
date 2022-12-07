@@ -114,6 +114,7 @@ ggplot(df_itemc, aes(x = qtr, y = mean, color = as.factor(d) )) + geom_line(line
 
 # 2-NN estimator
 
+
 match_did_nn_estimator = function(timeframe, data) {
   post_vec = 1:timeframe        # Generate the array of necessary observations.
   pre_vec = -post_vec
@@ -157,6 +158,7 @@ did_nn_6 <- match_did_nn_estimator(6, df)
 did_nn_4 
 did_nn_5 
 did_nn_6
+
 
 # Generating a plot similar to that of item (c), but for the 2-NN estimator.
 
@@ -206,18 +208,28 @@ match_did_nn_graph = function(timeframe, data) {
     annotate(geom = "text", x = -0.3, y = 750, label = "TREATMENT ASSIGNMENT", color = "black", alpha=0.5,
              angle = 90) + 
     theme_bw() + scale_color_brewer(palette="Paired") + 
-    ggtitle("Mean earnings per quarter for treated and non-treated individuals (MDID 2-NN Estimator)")
+    ggtitle("Mean earnings per quarter for treated and non-treated individuals")
   
 }
 
-match_did_nn_graph(6, df) # Plot
+
+
+match_did_nn_graph(6, df)
+
+
+
+
+
+
+
+
+
 
 
 # Kernel matching
 
 epanechnikov = function(z) {0.75*(1-z^2)*as.numeric(abs(z)<1)}
-timeframe = 4
-data = df
+
 match_did_kernel_estimator = function(timeframe, data) {
   post_vec = 1:timeframe
   pre_vec = -post_vec
@@ -247,7 +259,7 @@ match_did_kernel_estimator = function(timeframe, data) {
   
   
   combinations = expand.grid(score_treatment$p, score_control$p)
-  h = .9*nrow(score_control)^(-1/5)*sd(score_control$p)
+  h = 2.345*nrow(score_control)^(-1/5)*sd(score_control$p)
   
   Kern_mat = matrix(epanechnikov((combinations[, 2] - combinations[, 1])/h), nrow = nrow(score_treatment))
   W_mat = t(apply(Kern_mat, 1, function(i) i/sum(i)))
@@ -302,6 +314,9 @@ did_nn_cs_4
 did_nn_cs_5
 did_nn_cs_6
 
+# Plotting a similar plot to that of item (c), but for the 2-NN estimator with common support.
+match_did_nn_graph(6, common_support_df) # Plot
+
 did_kernel_cs_4 <- match_did_kernel_estimator(4, common_support_df)
 did_kernel_cs_5 <- match_did_kernel_estimator(5, common_support_df)
 did_kernel_cs_6 <- match_did_kernel_estimator(6, common_support_df)
@@ -309,9 +324,6 @@ did_kernel_cs_6 <- match_did_kernel_estimator(6, common_support_df)
 did_kernel_cs_4
 did_kernel_cs_5
 did_kernel_cs_6
-
-# Plotting a similar plot to that of item (c), but for the 2-NN estimator with common support.
-match_did_nn_graph(6, common_support_df) # Plot
 
 ######
 # Q2 #
