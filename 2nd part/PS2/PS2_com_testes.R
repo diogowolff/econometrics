@@ -198,7 +198,7 @@ match_did_nn_graph = function(timeframe, data) {
   
   match_control = df_with_match %>% select(id, qtr, earn_control) %>%
     mutate(d=0) %>% rename('earn' = earn_control)
-  
+    
   graph_df = score_treatment %>% select(id, qtr, d, earn) %>% rbind(match_control) %>%
     group_by(qtr, d) %>% summarise(mean = mean(earn, na.rm = T)) %>%
     mutate(post = ifelse(qtr>0, 1, 0))
@@ -285,6 +285,65 @@ did_kernel_6 <- match_did_kernel_estimator(6, df)
 did_kernel_4
 did_kernel_5
 did_kernel_6
+
+
+
+
+
+
+
+match_outside_did_2nn = function(timeframe, data) {
+  post_vec = 1:timeframe        # Generate the array of necessary observations.
+  pre_vec = -post_vec
+  
+  valid_indexes_post = data %>% filter(qtr %in% post_vec) %>%  # Check if this ID has a valid post 
+    select(id) %>% unique()                                    # observation.
+  
+  valid_indexes_pre = data %>% filter(qtr %in% pre_vec) %>%   # The same, but for before treatment.
+    select(id) %>% unique()
+  
+  valid_indexes = intersect(valid_indexes_post, valid_indexes_pre) %>% unlist() # Get IDs with both.
+  
+  df_itemd = data %>% filter(id %in% valid_indexes) %>%        # Get only correct IDs.
+    filter(qtr>= -timeframe) %>% filter(qtr <= timeframe) %>%  # Get only relevant obs from them.
+    mutate(post = ifelse(qtr > 0, "post", "pre"))
+  
+  score_control = df_itemd[df_itemd$d == 0, ] # i generate which is which to get the
+  score_treatment =  df_itemd[df_itemd$d == 1, ]  # nearest neighbors using RANN
+  
+  nn_control_vector = score_control %>% group_by(id) %>% slice(1)
+  nn_treatment_vector = score_treatment %>% group_by(id) %>% slice(1)
+  
+  nn_indexes = nn2(nn_control_vector$p, nn_treatment_vector$p, k = 2)
+  df_nn = as.data.frame(nn_indexes$nn.idx)
+  
+  match_ids = tibble(nn_treatment_vector, id1 = nn_control_vector[df_nn$V1, ]$id, 
+                     id2 = nn_control_vector[df_nn$V2, ]$id) %>%
+    select(id, id1, id2)
+  
+  df_with_match = score_treatment %>% left_join(match_ids, by = c('id')) %>%
+    left_join(select(score_control, c('id', 'earn', 'qtr')), by = c("id1" = "id", "qtr")) %>%
+    left_join(select(score_control, c('id', 'earn', 'qtr')), by = c("id2" = "id", "qtr")) %>%
+    mutate(earn_control = (earn.y + earn)/2)
+  
+  match_control = df_with_match %>% select(id, qtr, earn_control) %>%
+    mutate(d=0) %>% rename('earn' = earn_control)
+  
+  df_alpha = score_treatment %>% select(id, qtr, d, earn) %>% rbind(match_control) %>%
+    mutate(post = ifelse(qtr>0, 1, 0)) %>%
+    group_by(post, d) %>%
+    summarise(mean = mean(earn, na.rm = TRUE))
+  
+  alpha = (df_alpha$mean[4] - df_alpha$mean[2]) - (df_alpha$mean[3] - df_alpha$mean[1])
+  return(alpha)
+}
+
+match_outside_did_2nn(6, common_support_df)
+
+
+
+
+
 
 ### (e) 
 
@@ -438,4 +497,3 @@ broom::tidy(reg_infor) %>% filter(str_detect(term, 'D')) %>% dwplot(dot_args= li
 
 # the event variable is already a quarter-specific fixed effect, so there's no point
 # adding another one. this is specific to this example.
-
