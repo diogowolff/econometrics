@@ -29,16 +29,30 @@ y_of_treated_before_treatment_4 = colMeans(df[df$d == 1 & df$qtr < 0 & abs(df$qt
 y_of_control_after_treatment_4 = colMeans(df[df$d == 0 & df$qtr > 0 & abs(df$qtr) <= 4, 'earn'])
 y_of_control_before_treatment_4 = colMeans(df[df$d == 0 & df$qtr < 0 & abs(df$qtr) <= 4, 'earn'])
 
+y_of_treated_after_treatment_4 
+y_of_treated_before_treatment_4 
+y_of_control_after_treatment_4
+y_of_control_before_treatment_4
+
 y_of_treated_after_treatment_5 = colMeans(df[df$d == 1 & df$qtr > 0 & abs(df$qtr) <= 5, 'earn'])
 y_of_treated_before_treatment_5 = colMeans(df[df$d == 1 & df$qtr < 0 & abs(df$qtr) <= 5, 'earn'])
 y_of_control_after_treatment_5 = colMeans(df[df$d == 0 & df$qtr > 0 & abs(df$qtr) <= 5, 'earn'])
 y_of_control_before_treatment_5 = colMeans(df[df$d == 0 & df$qtr < 0 & abs(df$qtr) <= 5, 'earn'])
+
+y_of_treated_after_treatment_5
+y_of_treated_before_treatment_5 
+y_of_control_after_treatment_5
+y_of_control_before_treatment_5
 
 y_of_treated_after_treatment_6 = colMeans(df[df$d == 1 & df$qtr > 0 & abs(df$qtr) <= 6, 'earn'])
 y_of_treated_before_treatment_6 = colMeans(df[df$d == 1 & df$qtr < 0 & abs(df$qtr) <= 6, 'earn'])
 y_of_control_after_treatment_6 = colMeans(df[df$d == 0 & df$qtr > 0 & abs(df$qtr) <= 6, 'earn'])
 y_of_control_before_treatment_6 = colMeans(df[df$d == 0 & df$qtr < 0 & abs(df$qtr) <= 6, 'earn'])
 
+y_of_treated_after_treatment_6 
+y_of_treated_before_treatment_6 
+y_of_control_after_treatment_6 
+y_of_control_before_treatment_6
 
 # Defining a function for the difference-in-differences estimator:
 
@@ -62,7 +76,9 @@ did_4
 did_5
 did_6
 
-# It seems that the longer we collect data on, the smaller the effect becomes.
+# As can be noticed, it seems that the greater the time window, the smaller the estimated effect. 
+# Intuitively, this seems to indicate that the treatment effect is particularly pronounced at dates 
+# close to the treatment assignment, but starts to dissipate as time passes.
 
 
 ### (b) 
@@ -106,9 +122,20 @@ ggplot(df_itemc, aes(x = qtr, y = mean, color = as.factor(d) )) + geom_line(line
   ggtitle("Mean earnings per quarter for treated and non-treated individuals")
 
 
-# As can be seen, the trends seem to be somewhat parallel after the treatment, but before treatment, the two groups
-# have clearly different behaviours over time. This is clearly seen as the control group's average earnings are
-# increasing throughout the sample, while the treatment group's average earnings are decreasing before treatment.
+# As can be seen, the trends seem to be somewhat parallel after the treatment; but, before 
+# treatment, something suspicious is going on: the two groups have clearly different behaviors 
+# over time. Indeed, while the control group’s average earnings are increasing throughout the 
+# entire sample (and, in particular, increasing before treatment), before treatment the treatment 
+# group’s average earnings is strictly decreasing. This reveals a potential problem: the DID 
+# estimator assumptions imply that transitory shocks are uncorrelated with the treatment 
+# variable — an exogeneity assumption; but, if transitory shocks are not unrelated to 
+# the treatment assignment, then the DID estimator is inconsistent for the estimation of the ATT. 
+# What is possibly happening here is that enrollment in the JTPA job training program
+# is more likely if a temporary dip in earnings occurs just before the program takes place. 
+# If this is the case, transitory shocks on earnings are related to the treatment assignment 
+# and the DID estimator is inconsistent; in particular, faster earnings growth is expected among 
+# the treated even without program participation. Thus, the DID estimator is likely to overestimate 
+# the impact of treatment.
 
 ### (d)
 
@@ -160,7 +187,7 @@ did_nn_5
 did_nn_6
 
 
-# Generating a plot similar to that of item (c), but for the 2-NN estimator.
+# BONUS: Generating a plot similar to that of item (c), but for the 2-NN estimator.
 
 match_did_nn_graph = function(timeframe, data) {
   post_vec = 1:timeframe        # Generate the array of necessary observations.
@@ -219,17 +246,7 @@ match_did_nn_graph = function(timeframe, data) {
 }
 
 
-
 match_did_nn_graph(6, df)
-
-
-
-
-
-
-
-
-
 
 
 # Kernel matching
@@ -286,6 +303,11 @@ did_kernel_4
 did_kernel_5
 did_kernel_6
 
+# As can be seen, with the use of DID matching, the estimates increased in almost all cases
+# compared to the standard DID, except for the MDID 2-NN t in [−4, 4] case, which subtly
+# decreased. It is also interesting to note that the sensitivity of the estimator to time windows
+# has decreased.
+
 ### (e) 
 
 df %>% ggplot(aes(x = p, group = d)) + 
@@ -320,7 +342,12 @@ did_nn_cs_4
 did_nn_cs_5
 did_nn_cs_6
 
-# Plotting a similar plot to that of item (c), but for the 2-NN estimator with common support.
+# Considering common supports, the estimated effects using both estimators 
+# increased even more. The sensitivity of the time windows remained approximately 
+# the same for both estimators. Nevertheless, the 2-NN and kernel estimates 
+# are now closer to each other.
+
+# BONUS: Plotting a similar plot to that of item (c), but for the 2-NN estimator with common support.
 match_did_nn_graph(6, common_support_df) # Plot
 
 did_kernel_cs_4 <- match_did_kernel_estimator(4, common_support_df)
@@ -433,9 +460,21 @@ broom::tidy(reg_infor) %>% filter(str_detect(term, 'D')) %>% dwplot(dot_args= li
 # informal employment is hit but quickly recovers; it seems that the recovery
 # in unemployment and activity level is driven by informal employment only
 
+# As can be seen, unemployment rises significantly right after the outbreak of Covid 
+# and then start to decline. Inactivity also skyrockets after the start of the pandemic, 
+# but it seems to take a little bit longer to go down. Breaking down the employment data, 
+# we can see that formal employment declines sharply with the onset of the pandemic and remains 
+# at low levels throughout the entire sample. Informal employment, on the other hand, also 
+# plummets with the occurrence of the pandemic, but unlike formal employment, it recovers quickly. 
+# What we can conclude, therefore, is that it seems that the recovery in unemployment and the level 
+# of activity is mainly driven by informal employment.
+
+
 
 ### (c)
 
-# the event variable is already a quarter-specific fixed effect, so there's no point
-# adding another one. this is specific to this example.
+# Adding quarter-specific fixed effects is not necessary for this application. 
+# The reason is simple: the event-time specific dummy variables associated with the event 
+# variable are already capturing the quarter-specific fixed effects; so, there is no point 
+# in explicitly including another quarter-specific fixed effects term in the regression.
 
