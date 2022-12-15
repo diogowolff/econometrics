@@ -50,11 +50,11 @@ theta_estimator = function(x, y, bandwidth) {
   solve(lh_mat) %*% rh_vec
 }
 
-alp_rdd = (theta_estimator(data_over$xnorm, data_over$y, 15) -
-  theta_estimator(data_under$xnorm, data_under$y, 15))[1]
+alp_rdd = (theta_estimator(data_under$xnorm, data_under$y, 15) -
+  theta_estimator(data_over$xnorm, data_over$y, 15))[1]
 
-alpha_robustness = map_dbl(10:35, ~ (theta_estimator(data_over$xnorm, data_over$y, .x) -
-                                   theta_estimator(data_under$xnorm, data_under$y, .x))[1])
+alpha_robustness = map_dbl(10:35, ~ (theta_estimator(data_under$xnorm, data_under$y, .x) -
+                                   theta_estimator(data_over$xnorm, data_over$y, .x))[1])
 
 plot(10:35, alpha_robustness)
 
