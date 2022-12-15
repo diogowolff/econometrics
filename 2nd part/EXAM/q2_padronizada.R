@@ -203,7 +203,7 @@ results_100_1000 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_10
                                              method = 'BFGS',
                                              control = list('maxit' = '1000')), 
                               .options = furrr_options(seed = T))
-convergence = purrr::map(1:100, ~ results_100_1000[[.x]]$convergence)
+convergence_100_1000 = purrr::map(1:100, ~ results_100_1000[[.x]]$convergence)
 
 alpha_est_100_1000 = t(matrix(unlist(purrr::map(1:10, ~ results_100_1000[[.x]]$par)), nrow = 2))
 
