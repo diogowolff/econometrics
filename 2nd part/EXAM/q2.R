@@ -1,6 +1,7 @@
 set.seed(1337)
 
 library(evd)
+library(furrr)
 
 X_mat_500 = matrix(rlnorm(100*500, 5, 3), nrow = 500)
 X_mat_1000 = matrix(rlnorm(100*1000, 5, 3), nrow = 1000)
@@ -17,7 +18,7 @@ Y_mat_1000 = ifelse(0.8 + 0.7*X_mat_1000 + eps1_mat_1000 >= eps0_mat_1000, 1, 0)
 
 # c)
 
-
+plan(multisession)
 
 
 data_y_mean_500 = colMeans(Y_mat_500)
@@ -52,7 +53,8 @@ alpha_gmm_minimizer_500 = function(param, col_index) {
   t(moment_diff_vec) %*% moment_diff_vec
 }
 
-results = purrr::map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_500, col_index = .x)$par)
+results = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_500, col_index = .x)$par,
+                     .options = furrr_options(seed = T))
 alpha_est_500 = t(matrix(unlist(results), nrow = 2))
 
 colMeans(alpha_est_500)
@@ -99,7 +101,8 @@ alpha_gmm_minimizer_1000 = function(param, col_index) {
   t(moment_diff_vec) %*% moment_diff_vec
 }
 
-results_1000 = purrr::map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000, col_index = .x)$par)
+results_1000 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000, col_index = .x)$par,
+                          .options = furrr_options(seed = T))
 alpha_est_1000 = t(matrix(unlist(results_1000), nrow = 2))
 
 colMeans(alpha_est_1000)
@@ -113,6 +116,7 @@ mean((alpha_est_1000[,2]-0.7)^2)
 
 
 # d)
+
 
 
 alpha_gmm_minimizer_500_s100 = function(param, col_index) {
@@ -143,7 +147,8 @@ alpha_gmm_minimizer_500_s100 = function(param, col_index) {
   t(moment_diff_vec) %*% moment_diff_vec
 }
 
-results_s100 = purrr::map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_500_s100, col_index = .x)$par)
+results_s100 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_500_s100, col_index = .x)$par,
+                          .options = furrr_options(seed = T))
 alpha_est_500_s100 = t(matrix(unlist(results_s100), nrow = 2))
 
 colMeans(alpha_est_500_s100)
@@ -185,8 +190,11 @@ alpha_gmm_minimizer_1000_s100 = function(param, col_index) {
   t(moment_diff_vec) %*% moment_diff_vec
 }
 
-results_1000_s100 = purrr::map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000_s100, col_index = .x)$par)
-alpha_est_1000_s100 = t(matrix(unlist(results_1000_s100), nrow = 2))
+results_1000_s100 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000_s100, 
+                                            col_index = .x), .options = furrr_options(seed = T))
+convergence = purrr::map(1:100, ~ results_1000_s100[[.x]]$convergence)
+
+alpha_est_1000_s100 = t(matrix(unlist(purrr::map(1:10, ~ results_1000_s100[[.x]]$par)), nrow = 2))
 
 colMeans(alpha_est_1000_s100)
 var(alpha_est_1000_s100[,1])
@@ -194,3 +202,6 @@ var(alpha_est_1000_s100[,2])
 
 mean((alpha_est_1000_s100[,1]-0.8)^2)
 mean((alpha_est_1000_s100[,2]-0.7)^2)
+
+optim(c(0.5, 0.5), alpha_gmm_minimizer_1000_s100, 
+      col_index = 1)
