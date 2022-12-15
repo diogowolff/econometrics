@@ -61,9 +61,13 @@ end_locations = purrr::map2(expand.grid(a0 = seq(0.6, 1, .02), a1 = seq(.5, .9, 
                             expand.grid(a0 = seq(0.6, 1, .02), a1 = seq(.5, .9, .02))[,2],
             ~ estimator_with_20_sims(c(.x, .y)))
             
-df = cbind(expand.grid(a0 = seq(0.5, 1, .1), a1 = seq(.5, 1, .1)), t(matrix(unlist(teste), nrow = 3))) %>%
+df = cbind(expand.grid(a0 = seq(0.6, 1, .02), a1 = seq(.5, .9, .02)), 
+           t(matrix(unlist(end_locations), nrow = 3))) %>%
   rename(xend = `1`, yend = `2`)
 
 
 ggplot(df) + geom_segment(aes(x=a0, y = a1, xend=xend, yend = yend),
-                          arrow = arrow(length = unit(0.1, "cm")))
+                          arrow = arrow(length = unit(0.1, "cm"))) +
+  xlim(0.5, 1) + ylim(0.5, 1)
+
+
