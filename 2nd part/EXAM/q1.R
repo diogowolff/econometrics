@@ -13,17 +13,17 @@ df = read_csv('progresaRDD_exam_q1.csv')
 
 # its easy to implement using poly()
 
-quad_reg = lm(y ~ I(xnorm <= 0)*poly(xnorm, 2), data = df)
+quad_reg = lm(y ~ I(xnorm <= 0)*poly(xnorm, 2, raw = TRUE), data = df)
 quad_fit = quad_reg$fitted.values
 plot(df$xnorm, quad_fit)
 
-cub_reg = lm(y ~ I(xnorm <= 0)*poly(xnorm, 3), data = df)
+cub_reg = lm(y ~ I(xnorm <= 0)*poly(xnorm, 3, raw = TRUE), data = df)
 cub_fit = cub_reg$fitted.values
 plot(df$xnorm, cub_fit)
 
-quar_reg = lm(y ~ I(xnorm <= 0)*poly(xnorm, 4), data = df)
-quad_fit = quad_reg$fitted.values
-plot(df$xnorm, quad_fit)
+quar_reg = lm(y ~ I(xnorm <= 0)*poly(xnorm, 4, raw = TRUE), data = df)
+quar_fit = quar_reg$fitted.values
+plot(df$xnorm, quar_fit)
 
 
 # it's working, just have to make some pretty graphs in ggplot
@@ -50,11 +50,11 @@ theta_estimator = function(x, y, bandwidth) {
   solve(lh_mat) %*% rh_vec
 }
 
-alp_rdd = (theta_estimator(data_over$xnorm, data_over$y, 15) -
-  theta_estimator(data_under$xnorm, data_under$y, 15))[1]
+alp_rdd = (theta_estimator(data_under$xnorm, data_under$y, 15) -
+  theta_estimator(data_over$xnorm, data_over$y, 15))[1]
 
-alpha_robustness = map_dbl(10:35, ~ (theta_estimator(data_over$xnorm, data_over$y, .x) -
-                                   theta_estimator(data_under$xnorm, data_under$y, .x))[1])
+alpha_robustness = map_dbl(10:35, ~ (theta_estimator(data_under$xnorm, data_under$y, .x) -
+                                   theta_estimator(data_over$xnorm, data_over$y, .x))[1])
 
 plot(10:35, alpha_robustness)
 
