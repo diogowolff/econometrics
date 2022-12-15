@@ -58,7 +58,7 @@ results_30_500 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_30_5
                                     control = list('maxit' = '1000')),
                      .options = furrr_options(seed = T))
 convergence_30_500 = purrr::map(1:100, ~ results_30_500[[.x]]$convergence)
-alpha_est_30_500 = t(matrix(unlist(purrr::map(1:100, ~ results[[.x]]$par)), nrow = 2))
+alpha_est_30_500 = t(matrix(unlist(purrr::map(1:100, ~ results_30_500[[.x]]$par)), nrow = 2))
 
 colMeans(alpha_est_30_500)
 var(alpha_est_30_500[,1])
