@@ -3,8 +3,8 @@ set.seed(1337)
 library(evd)
 library(furrr)
 
-X_mat_500 = matrix(rlnorm(100*500, 5, 3), nrow = 500)
-X_mat_1000 = matrix(rlnorm(100*1000, 5, 3), nrow = 1000)
+X_mat_500 = matrix(rlnorm(100*500, log(5), log(3)), nrow = 500)
+X_mat_1000 = matrix(rlnorm(100*1000, log(5), log(3)), nrow = 1000)
 
 eps0_mat_500 = matrix(rgumbel(100*500), nrow = 500)
 eps1_mat_500 = matrix(rgumbel(100*500), nrow = 500)
@@ -53,9 +53,12 @@ alpha_gmm_minimizer_500 = function(param, col_index) {
   t(moment_diff_vec) %*% moment_diff_vec
 }
 
-results = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_500, col_index = .x)$par,
+results = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_500, col_index = .x,
+                                    method = 'BFGS',
+                                    control = list('maxit' = '1000')),
                      .options = furrr_options(seed = T))
-alpha_est_500 = t(matrix(unlist(results), nrow = 2))
+convergence_30_500 = purrr::map(1:100, ~ results[[.x]]$convergence)
+alpha_est_500 = t(matrix(unlist(purrr::map(1:100, ~ results[[.x]]$par)), nrow = 2))
 
 colMeans(alpha_est_500)
 var(alpha_est_500[,1])
@@ -101,9 +104,12 @@ alpha_gmm_minimizer_1000 = function(param, col_index) {
   t(moment_diff_vec) %*% moment_diff_vec
 }
 
-results_1000 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000, col_index = .x)$par,
+results_1000 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000, col_index = .x,
+                                         method = 'BFGS',
+                                         control = list('maxit' = '1000')),
                           .options = furrr_options(seed = T))
-alpha_est_1000 = t(matrix(unlist(results_1000), nrow = 2))
+convergence_30_1000 = purrr::map(1:100, ~ results_1000[[.x]]$convergence)
+alpha_est_1000 = t(matrix(unlist(purrr::map(1:100, ~ results_1000[[.x]]$par)), nrow = 2))
 
 colMeans(alpha_est_1000)
 var(alpha_est_1000[,1])
