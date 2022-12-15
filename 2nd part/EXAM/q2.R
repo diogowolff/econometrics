@@ -3,8 +3,8 @@ set.seed(1337)
 library(evd)
 library(furrr)
 
-X_mat_500 = matrix(rlnorm(100*500, log(5), log(3)), nrow = 500)
-X_mat_1000 = matrix(rlnorm(100*1000, log(5), log(3)), nrow = 1000)
+X_mat_500 = matrix(rlnorm(100*500, 5, 3), nrow = 500)
+X_mat_1000 = matrix(rlnorm(100*1000, log(25/sqrt(25+3)), log(1+3/25)), nrow = 1000)
 
 eps0_mat_500 = matrix(rgumbel(100*500), nrow = 500)
 eps1_mat_500 = matrix(rgumbel(100*500), nrow = 500)
@@ -105,7 +105,7 @@ alpha_gmm_minimizer_1000 = function(param, col_index) {
 }
 
 results_1000 = future_map(1:100, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000, col_index = .x,
-                                         method = 'BFGS',
+                                         method = 'SANN',
                                          control = list('maxit' = '1000')),
                           .options = furrr_options(seed = T))
 convergence_30_1000 = purrr::map(1:100, ~ results_1000[[.x]]$convergence)
