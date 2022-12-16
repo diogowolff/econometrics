@@ -12,7 +12,7 @@ Y_mat_500 = ifelse(0.8 + 0.7*X_mat_500 + eps1_mat_500 >= eps0_mat_500, 1, 0)
 
 # c)
 
-plan(multisession, workers = 9)
+plan(multisession)
 
 
 
@@ -50,13 +50,15 @@ alpha_gmm_minimizer_1000_500 = function(param, col_index) {
   t(moment_diff_vec) %*% moment_diff_vec
 }
 
-results_100_1000 = future_map(1:1000, ~ optim(c(0.5, 0.5), alpha_gmm_minimizer_1000_5000, col_index = .x,
+results_starting_on_real = future_map(1:1000, ~ optim(c(0.8, 0.7), alpha_gmm_minimizer_1000_500, col_index = .x,
                                              method = 'BFGS',
                                              control = list('maxit' = '1000')), 
-                              .options = furrr_options(seed = T))
-convergence_100_1000 = purrr::map(1:1000, ~ results_100_1000[[.x]]$convergence)
+                              .options = furrr_options(seed = T),
+                              .progress = TRUE)
 
-alpha_est_100_1000 = t(matrix(unlist(purrr::map(1:2, ~ results_100_1000[[.x]]$par)), nrow = 2))
+convergence_100_1000 = purrr::map(1:1000, ~ results_starting_on_real[[.x]]$convergence)
+
+alpha_est_100_1000 = t(matrix(unlist(purrr::map(1:1000, ~ results_starting_on_real[[.x]]$par)), nrow = 2))
 
 colMeans(alpha_est_100_1000)
 var(alpha_est_100_1000[,1])
@@ -64,3 +66,4 @@ var(alpha_est_100_1000[,2])
 
 mean((alpha_est_100_1000[,1]-0.8)^2)
 mean((alpha_est_100_1000[,2]-0.7)^2)
+
