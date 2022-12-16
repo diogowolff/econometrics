@@ -1,7 +1,7 @@
 set.seed(1337)
 
 library(evd)
-library(furrr)
+library(purrr)
 
 ######
 # Q2 #
@@ -53,8 +53,6 @@ View(datasets_1000)
 
 ### (c)
 
-plan(multisession) # For computational performance.
-
 ## SIZE 500 DATASETS ESTIMATES, S = 30:
 
 # Generating the "actual" moments, using the data generated in (b). 
@@ -64,16 +62,16 @@ data_cov_500 = mapply(function(x, y){cov(x, y)}, as.data.frame(Y_mat_500),
 
 # Defining the SMM estimator function for datasets of size 500, with S = 30.
 alpha_gmm_minimizer_30_500 = function(param, col_index) {
-  data_x = matrix(rep(X_mat_500[, col_index], 30), nrow = 500)
-  sim_eps0 = matrix(rgumbel(30*500), nrow = 500)
-  sim_eps1 = matrix(rgumbel(30*500), nrow = 500)
+  sim_eps0 = rgumbel(30*500)
+  sim_eps1 = rgumbel(30*500)
   
-  estimated_choice = ifelse(param[1] + param[2]*data_x + sim_eps0 >= sim_eps1, 1, 0)
+  estimated_choice = matrix(ifelse(param[1] + param[2]*X_mat_500[, col_index] 
+                                   + sim_eps0 >= sim_eps1, 1, 0), nrow = 500)
   mean_of_sims = colMeans(estimated_choice)
   mean_of_means = mean(mean_of_sims)
 
   cov_of_sims_with_x = mapply(function(x, y){cov(x, y)}, as.data.frame(estimated_choice), 
-                              as.data.frame(data_x))
+                              as.data.frame(X_mat_500[, col_index]))
 
   mean_of_covs = mean(cov_of_sims_with_x)
   moment_diff_vec = c(data_y_mean_500[col_index] - mean_of_means, 
@@ -87,11 +85,11 @@ alpha_gmm_minimizer_30_500 = function(param, col_index) {
 
 # 1) With initial guess (0, 0), using BFGS: 
 
-results_30_500_00 = future_map(1:100, ~ optim(c(0, 0), 
+results_30_500_00 = map(1:100, ~ optim(c(0, 0), 
                                     alpha_gmm_minimizer_30_500, col_index = .x,
                                     method = 'BFGS',
                                     control = list('maxit' = '1000')),
-                                   .options = furrr_options(seed = T))
+                                   )
 
 # Checking convergence status:
 convergence_30_500_00 = purrr::map(1:100, ~ results_30_500_00[[.x]]$convergence) 
@@ -113,11 +111,11 @@ msqe_alpha1_30_500_00
 
 # 2) With initial guess (0.5, 0.5), using BFGS: 
 
-results_30_500_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+results_30_500_55 = map(1:100, ~ optim(c(0.5, 0.5), 
                                               alpha_gmm_minimizer_30_500, col_index = .x,
                                               method = 'BFGS',
                                               control = list('maxit' = '1000')),
-                               .options = furrr_options(seed = T))
+                               )
 
 # Checking convergence status:
 convergence_30_500_55 = purrr::map(1:100, ~ results_30_500_55[[.x]]$convergence) 
@@ -139,11 +137,11 @@ msqe_alpha1_30_500_55
 
 # 3) With initial guess (0.75, 0.75), using BFGS: 
 
-results_30_500_7575 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+results_30_500_7575 = map(1:100, ~ optim(c(0.75, 0.75), 
                                               alpha_gmm_minimizer_30_500, col_index = .x,
                                               method = 'BFGS',
                                               control = list('maxit' = '1000')),
-                               .options = furrr_options(seed = T))
+                               )
 
 # Checking convergence status:
 convergence_30_500_7575 = purrr::map(1:100, ~ results_30_500_7575[[.x]]$convergence) 
@@ -172,17 +170,15 @@ data_cov_1000 = mapply(function(x, y){cov(x, y)}, as.data.frame(Y_mat_1000),
 
 # Defining the SMM estimator function for datasets of size 1000, with S = 30.
 alpha_gmm_minimizer_30_1000 = function(param, col_index) {
+  sim_eps0 = rgumbel(30*1000)
+  sim_eps1 = rgumbel(30*1000)
   
-  data_x = matrix(rep(X_mat_1000[, col_index], 30), nrow = 1000)
-  sim_eps0 = matrix(rgumbel(30*1000), nrow = 1000)
-  sim_eps1 = matrix(rgumbel(30*1000), nrow = 1000)
-  
-  estimated_choice = ifelse(param[1] + param[2]*data_x + sim_eps0 >= sim_eps1, 1, 0)
+  estimated_choice = matrix(ifelse(param[1] + param[2]*X_mat_1000[, col_index] + sim_eps0 >= sim_eps1, 1, 0), nrow = 1000)
   mean_of_sims = colMeans(estimated_choice)
   mean_of_means = mean(mean_of_sims)
 
   cov_of_sims_with_x = mapply(function(x, y){cov(x, y)}, as.data.frame(estimated_choice), 
-                              as.data.frame(data_x))
+                              as.data.frame(X_mat_1000[, col_index]))
   
   mean_of_covs = mean(cov_of_sims_with_x)
   moment_diff_vec = c(data_y_mean_1000[col_index] - mean_of_means, 
@@ -195,11 +191,11 @@ alpha_gmm_minimizer_30_1000 = function(param, col_index) {
 
 # 1) With initial guess (0, 0), using BFGS: 
 
-results_30_1000_00 = future_map(1:100, ~ optim(c(0, 0), 
+results_30_1000_00 = map(1:100, ~ optim(c(0, 0), 
                                             alpha_gmm_minimizer_30_1000, col_index = .x,
                                             method = 'BFGS',
                                             control = list('maxit' = '1000')),
-                                            .options = furrr_options(seed = T))
+                                            )
 
 # Checking convergence status: 
 convergence_30_1000_00 = purrr::map(1:100, ~ results_30_1000_00[[.x]]$convergence)
@@ -221,11 +217,11 @@ msqe_alpha1_30_1000_00
 
 # 2) With initial guess (0.5, 0.5), using BFGS: 
 
-results_30_1000_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+results_30_1000_55 = map(1:100, ~ optim(c(0.5, 0.5), 
                                                alpha_gmm_minimizer_30_1000, col_index = .x,
                                                method = 'BFGS',
                                                control = list('maxit' = '1000')),
-                                .options = furrr_options(seed = T))
+                                )
 
 # Checking convergence status: 
 convergence_30_1000_55 = purrr::map(1:100, ~ results_30_1000_55[[.x]]$convergence)
@@ -248,11 +244,11 @@ msqe_alpha1_30_1000_55
 
 # 3) With initial guess (0.75, 0.75), using BFGS: 
 
-results_30_1000_7575 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+results_30_1000_7575 = map(1:100, ~ optim(c(0.75, 0.75), 
                                                alpha_gmm_minimizer_30_1000, col_index = .x,
                                                method = 'BFGS',
                                                control = list('maxit' = '1000')),
-                                .options = furrr_options(seed = T))
+                                )
 
 # Checking convergence status: 
 convergence_30_1000_7575 = purrr::map(1:100, ~ results_30_1000_7575[[.x]]$convergence)
@@ -279,16 +275,15 @@ msqe_alpha1_30_1000_7575
 
 # Defining the SMM estimator function for datasets of size 500, with S = 100.
 alpha_gmm_minimizer_100_500 = function(param, col_index) {
-  data_x = matrix(rep(X_mat_500[, col_index], 100), nrow = 500)
-  sim_eps0 = matrix(rgumbel(100*500), nrow = 500)
-  sim_eps1 = matrix(rgumbel(100*500), nrow = 500)
+  sim_eps0 = rgumbel(100*500)
+  sim_eps1 = rgumbel(100*500)
   
-  estimated_choice = ifelse(param[1] + param[2]*data_x + sim_eps0 >= sim_eps1, 1, 0)
+  estimated_choice = matrix(ifelse(param[1] + param[2]*X_mat_500[, col_index] + sim_eps0 >= sim_eps1, 1, 0), nrow = 500)
   mean_of_sims = colMeans(estimated_choice)
   mean_of_means = mean(mean_of_sims)
 
   cov_of_sims_with_x = mapply(function(x, y){cov(x, y)}, as.data.frame(estimated_choice), 
-                              as.data.frame(data_x))
+                              as.data.frame(X_mat_500[, col_index]))
 
   mean_of_covs = mean(cov_of_sims_with_x)
   moment_diff_vec = c(data_y_mean_500[col_index] - mean_of_means, 
@@ -300,11 +295,11 @@ alpha_gmm_minimizer_100_500 = function(param, col_index) {
 # generated in (b), for S = 100... 
 
 # 1) With initial guess (0, 0), using BFGS: 
-results_100_500_00 = future_map(1:100, ~ optim(c(0, 0), 
+results_100_500_00 = map(1:100, ~ optim(c(0, 0), 
                                           alpha_gmm_minimizer_100_500, col_index = .x,
                                           method = 'BFGS',
                                           control = list('maxit' = '1000')),
-                                          .options = furrr_options(seed = T))
+                                          )
 
 # Checking convergence status:
 convergence_100_500_00 = purrr::map(1:100, ~ results_100_500_00[[.x]]$convergence)
@@ -325,11 +320,11 @@ msqe_alpha0_100_500_00
 msqe_alpha1_100_500_00
 
 # 2) With initial guess (0.5, 0.5), using BFGS:
-results_100_500_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+results_100_500_55 = map(1:100, ~ optim(c(0.5, 0.5), 
                                             alpha_gmm_minimizer_100_500, col_index = .x,
                                             method = 'BFGS',
                                             control = list('maxit' = '1000')),
-                             .options = furrr_options(seed = T))
+                             )
 
 # Checking convergence status:
 convergence_100_500_55 = purrr::map(1:100, ~ results_100_500_55[[.x]]$convergence)
@@ -350,11 +345,11 @@ msqe_alpha0_100_500_55
 msqe_alpha1_100_500_55
 
 # 3) With initial guess (0.75, 0.75), using BFGS:
-results_100_500_75 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+results_100_500_75 = map(1:100, ~ optim(c(0.75, 0.75), 
                                                alpha_gmm_minimizer_100_500, col_index = .x,
                                                method = 'BFGS',
-                                               control = list('maxit' = '1000')),
-                                .options = furrr_options(seed = T))
+                                               control = list('maxit' = '1000'))
+                                )
 
 # Checking convergence status:
 convergence_100_500_75 = purrr::map(1:100, ~ results_100_500_75[[.x]]$convergence)
@@ -378,16 +373,15 @@ msqe_alpha1_100_500_75
 
 # Defining the SMM estimator function for datasets of size 1000, with S = 100.
 alpha_gmm_minimizer_100_1000 = function(param, col_index) {
-  data_x = matrix(rep(X_mat_1000[, col_index], 100), nrow = 1000)
-  sim_eps0 = matrix(rgumbel(100*1000), nrow = 1000)
-  sim_eps1 = matrix(rgumbel(100*1000), nrow = 1000)
+  sim_eps0 = rgumbel(100*1000)
+  sim_eps1 = rgumbel(100*1000)
   
-  estimated_choice = ifelse(param[1] + param[2]*data_x + sim_eps0 >= sim_eps1, 1, 0)
+  estimated_choice = matrix(ifelse(param[1] + param[2]*X_mat_1000[, col_index] + sim_eps0 >= sim_eps1, 1, 0), nrow=1000)
   mean_of_sims = colMeans(estimated_choice)
   mean_of_means = mean(mean_of_sims)
 
   cov_of_sims_with_x = mapply(function(x, y){cov(x, y)}, as.data.frame(estimated_choice), 
-                              as.data.frame(data_x))
+                              as.data.frame(X_mat_1000[, col_index]))
   mean_of_covs = mean(cov_of_sims_with_x)
   moment_diff_vec = c(data_y_mean_1000[col_index] - mean_of_means, 
                       data_cov_1000[col_index] - mean_of_covs)
@@ -400,14 +394,14 @@ alpha_gmm_minimizer_100_1000 = function(param, col_index) {
 
 # 1) With initial guess (0, 0), using BFGS:
 
-results_100_1000_00 = future_map(1:100, ~ optim(c(0, 0), 
+results_100_1000_00 = map(1:100, ~ optim(c(0, 0), 
                                           alpha_gmm_minimizer_100_1000, col_index = .x,
                                           method = 'BFGS',
-                                          control = list('maxit' = '1000')), 
-                                          .options = furrr_options(seed = T))
+                                          control = list('maxit' = '1000'))
+                                          )
 
 # Checking convergence status:
-convergence_100_1000_00 = purrr::map(1:100, ~ results_100_1000[[.x]]$convergence)
+convergence_100_1000_00 = purrr::map(1:100, ~ results_100_1000_00[[.x]]$convergence)
 
 # Results: 
 alpha_est_100_1000_00 = t(matrix(unlist(purrr::map(1:100, ~ results_100_1000_00[[.x]]$par)), nrow = 2))
@@ -426,11 +420,11 @@ msqe_alpha1_100_1000_00
 
 # 2) With initial guess (0.5, 0.5), using BFGS:
 
-results_100_1000_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+results_100_1000_55 = map(1:100, ~ optim(c(0.5, 0.5), 
                                                 alpha_gmm_minimizer_100_1000, col_index = .x,
                                                 method = 'BFGS',
-                                                control = list('maxit' = '1000')), 
-                                 .options = furrr_options(seed = T))
+                                                control = list('maxit' = '1000'))
+                                 )
 
 # Checking convergence status:
 convergence_100_1000_55 = purrr::map(1:100, ~ results_100_1000_55[[.x]]$convergence)
@@ -452,11 +446,11 @@ msqe_alpha1_100_1000_55
 
 # 3) With initial guess (0.75, 0.75), using BFGS:
 
-results_100_1000_7575 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+results_100_1000_7575 = map(1:100, ~ optim(c(0.75, 0.75), 
                                                 alpha_gmm_minimizer_100_1000, col_index = .x,
                                                 method = 'BFGS',
-                                                control = list('maxit' = '1000')), 
-                                 .options = furrr_options(seed = T))
+                                                control = list('maxit' = '1000')) 
+                                 )
 
 # Checking convergence status:
 convergence_100_1000_7575 = purrr::map(1:100, ~ results_100_1000_7575[[.x]]$convergence)
@@ -476,4 +470,82 @@ var_alpha1_100_1000_7575
 msqe_alpha0_100_1000_7575
 msqe_alpha1_100_1000_7575
 
-### The End.
+
+
+alpha_gmm_given_est_alpha1 = function(param, col_index) {
+  sim_eps0 = rgumbel(100*1000)
+  sim_eps1 = rgumbel(100*1000)
+  
+  estimated_choice = matrix(ifelse(param + colMeans(alpha_est_100_1000_7575)[2]*X_mat_1000[, col_index]
+                                   + sim_eps0 >= sim_eps1, 1, 0), nrow = 1000)
+  
+  
+  
+  mean_of_sims = colMeans(estimated_choice)
+  
+  mean_of_means = mean(mean_of_sims)
+  
+  
+  
+  
+  cov_of_sims_with_x = mapply(function(x, y){cov(x, y)}, as.data.frame(estimated_choice), 
+                              as.data.frame(X_mat_1000[, col_index]))
+  
+  mean_of_covs = mean(cov_of_sims_with_x)
+  
+  
+  (data_y_mean_1000[col_index] - mean_of_means)^2 + (data_cov_1000[col_index] - mean_of_covs)^2
+}
+
+
+inner_map_alpha1 = function(param) {
+  mean(map_dbl(1:100, ~ alpha_gmm_given_est_alpha1(param, .x)))
+} 
+
+graph_data_alpha1 = map_dbl(seq(0.6, .9, 0.005), inner_map_alpha1)
+
+alpha_gmm_given_est_alpha0 = function(param, col_index) {
+  sim_eps0 = rgumbel(100*1000)
+  sim_eps1 = rgumbel(100*1000)
+  
+  estimated_choice = matrix(ifelse(colMeans(alpha_est_100_1000_7575)[1] + param*X_mat_1000[, col_index]
+                                   + sim_eps0 >= sim_eps1, 1, 0), nrow = 1000)
+  
+  
+  
+  mean_of_sims = colMeans(estimated_choice)
+  
+  mean_of_means = mean(mean_of_sims)
+  
+  
+  
+  
+  cov_of_sims_with_x = mapply(function(x, y){cov(x, y)}, as.data.frame(estimated_choice), 
+                              as.data.frame(X_mat_1000[, col_index]))
+  
+  mean_of_covs = mean(cov_of_sims_with_x)
+  
+  
+  (data_y_mean_1000[col_index] - mean_of_means)^2 + (data_cov_1000[col_index] - mean_of_covs)^2
+}
+
+
+inner_map_alpha0 = function(param) {
+  mean(map_dbl(1:100, ~ alpha_gmm_given_est_alpha0(param, .x)))
+} 
+
+graph_data_alpha0 = map_dbl(seq(0.6, .9, 0.005), inner_map_alpha0)
+
+library(ggplot2)
+library(dplyr)
+
+
+data.frame('Constant' = seq(0.6, .9, 0.005), 'SMM Value' = graph_data_alpha1, check.names = FALSE) %>%
+  ggplot(aes(x = Constant, y = `SMM Value`)) + geom_line()
+
+data.frame('Constant' = seq(0.6, .9, 0.005), 'SMM Value' = graph_data_alpha0, check.names = FALSE) %>%
+  ggplot(aes(x = Constant, y = `SMM Value`)) + geom_line()
+
+
+
+save.image(file='data_q2.RData')
