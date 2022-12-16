@@ -43,9 +43,10 @@ ggplot(data.frame(df$xnorm, quad_fit), aes(x = df.xnorm, y = quad_fit)) +
   ylab("Scholl enrollment status (Y)") +
   ggtitle("RDD fitted values, quadratic specification with full polynomial")
 
+# Including a confidence interval: 
 ggplot(data.frame(df$xnorm, quad_fit), aes(x = df.xnorm, y = quad_fit)) + 
   geom_point(alpha = 0.2) +
-  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="red") +
+  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="black") +
   geom_segment(aes(x = 0, xend = 0, y = quad_cons + confint(quad_reg)[2,1], 
                    yend = quad_cons + confint(quad_reg)[2,2])) +
   geom_segment(aes(x=-1, xend=1, y=quad_cons + confint(quad_reg)[2,1],
@@ -84,10 +85,11 @@ ggplot(data.frame(df$xnorm, cub_fit), aes(x = df.xnorm, y = cub_fit)) +
   xlab("Elegibility (xnorm, elegible if <= 0)") +
   ylab("Scholl enrollment status (Y)") +
   ggtitle("RDD fitted values, cubic specification with full polynomial")
-  
+
+# Including a confidence interval:  
 ggplot(data.frame(df$xnorm, cub_fit), aes(x = df.xnorm, y = cub_fit)) + 
   geom_point(alpha = 0.2)  +
-  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="red") +
+  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="black") +
   geom_segment(aes(x = 0, xend = 0, y = cub_cons + confint(cub_reg)[2,1], 
                    yend = cub_cons + confint(cub_reg)[2,2])) +
   geom_segment(aes(x=-1, xend=1, y=cub_cons + confint(cub_reg)[2,1],
@@ -127,10 +129,11 @@ ggplot(data.frame(df$xnorm, quar_fit), aes(x = df.xnorm, y = quar_fit)) +
   xlab("Elegibility (xnorm, elegible if <= 0)") +
   ylab("Scholl enrollment status (Y)") +
   ggtitle("RDD fitted values, quartic specification with full polynomial")
-  
+
+# Including a confidence interval:  
 ggplot(data.frame(df$xnorm, quar_fit), aes(x = df.xnorm, y = quar_fit)) + 
   geom_point(alpha = 0.2) +
-  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="red") +
+  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="black") +
   geom_segment(aes(x = 0, xend = 0, y = quar_cons + confint(quar_reg)[2,1], 
                                             yend = quar_cons + confint(quar_reg)[2,2])) +
   geom_segment(aes(x=-1, xend=1, y=quar_cons + confint(quar_reg)[2,1],

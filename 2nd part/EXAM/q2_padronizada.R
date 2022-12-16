@@ -16,8 +16,8 @@ library(furrr)
 # Creating matrices containing 100 vectors of incomes, 
 # with size 500 and 1000 each, respectively, generated from the 
 # log-normal distribution with location 5 and scale sqrt(3).
-X_mat_500 = matrix(rlnorm(100*500, 5, sqrt(3)), nrow = 500) 
-X_mat_1000 = matrix(rlnorm(100*1000, 5, sqrt(3)), nrow = 1000)
+X_mat_500 = matrix(rlnorm(100*500, log(25/sqrt(25+3)), log(1 + 3/25)), nrow = 500) 
+X_mat_1000 = matrix(rlnorm(100*1000, log(25/sqrt(25+3)), log(1 + 3/25)), nrow = 1000)
 
 # Creating matrices containing 100 vectors of alternative-specific shocks, 
 # with size 500 and 1000 each, respectively, generated from the 
@@ -83,25 +83,85 @@ alpha_gmm_minimizer_30_500 = function(param, col_index) {
 }
 
 # Optimizing with respect to (alpha_0, alpha_1) for each of the 100 size-500 datasets
-# generated in (a), for S = 30: 
-results_30_500 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+# generated in (a), for S = 30... 
+
+# 1) With initial guess (0, 0), using BFGS: 
+
+results_30_500_00 = future_map(1:100, ~ optim(c(0, 0), 
                                     alpha_gmm_minimizer_30_500, col_index = .x,
                                     method = 'BFGS',
                                     control = list('maxit' = '1000')),
                                    .options = furrr_options(seed = T))
 
 # Checking convergence status:
-convergence_30_500 = purrr::map(1:100, ~ results_30_500[[.x]]$convergence) 
+convergence_30_500_00 = purrr::map(1:100, ~ results_30_500_00[[.x]]$convergence) 
 
 # Results: 
-alpha_est_30_500 = t(matrix(unlist(purrr::map(1:100, ~ results_30_500[[.x]]$par)), nrow = 2))
+alpha_est_30_500_00 = t(matrix(unlist(purrr::map(1:100, ~ results_30_500_00[[.x]]$par)), nrow = 2))
 
-colMeans(alpha_est_30_500) # Mean of alpha_0 and alpha_1 estimates, respectively.
-var(alpha_est_30_500[,1]) # Variance of alpha_0 estimates.
-var(alpha_est_30_500[,2]) # Variance of alpha_1 estimates.
+means_30_500_00 <- colMeans(alpha_est_30_500_00) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_30_500_00 <- var(alpha_est_30_500_00[,1]) # Variance of alpha_0 estimates.
+var_alpha1_30_500_00 <- var(alpha_est_30_500_00[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_30_500_00 <- mean((alpha_est_30_500_00[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_30_500_00 <- mean((alpha_est_30_500_00[,2]-0.7)^2) # MSQE of alpha_1 estimates.
 
-mean((alpha_est_30_500[,1]-0.8)^2) # MSQE of alpha_0 estimates.
-mean((alpha_est_30_500[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+means_30_500_00
+var_alpha0_30_500_00
+var_alpha1_30_500_00
+msqe_alpha0_30_500_00
+msqe_alpha1_30_500_00
+
+# 2) With initial guess (0.5, 0.5), using BFGS: 
+
+results_30_500_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+                                              alpha_gmm_minimizer_30_500, col_index = .x,
+                                              method = 'BFGS',
+                                              control = list('maxit' = '1000')),
+                               .options = furrr_options(seed = T))
+
+# Checking convergence status:
+convergence_30_500_55 = purrr::map(1:100, ~ results_30_500_55[[.x]]$convergence) 
+
+# Results: 
+alpha_est_30_500_55 = t(matrix(unlist(purrr::map(1:100, ~ results_30_500_55[[.x]]$par)), nrow = 2))
+
+means_30_500_55 <- colMeans(alpha_est_30_500_55) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_30_500_55 <- var(alpha_est_30_500_55[,1]) # Variance of alpha_0 estimates.
+var_alpha1_30_500_55 <- var(alpha_est_30_500_55[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_30_500_55 <- mean((alpha_est_30_500_55[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_30_500_55 <- mean((alpha_est_30_500_55[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_30_500_55
+var_alpha0_30_500_55
+var_alpha1_30_500_55
+msqe_alpha0_30_500_55
+msqe_alpha1_30_500_55
+
+# 3) With initial guess (0.75, 0.75), using BFGS: 
+
+results_30_500_7575 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+                                              alpha_gmm_minimizer_30_500, col_index = .x,
+                                              method = 'BFGS',
+                                              control = list('maxit' = '1000')),
+                               .options = furrr_options(seed = T))
+
+# Checking convergence status:
+convergence_30_500_7575 = purrr::map(1:100, ~ results_30_500_7575[[.x]]$convergence) 
+
+# Results: 
+alpha_est_30_500_7575 = t(matrix(unlist(purrr::map(1:100, ~ results_30_500_7575[[.x]]$par)), nrow = 2))
+
+means_30_500_7575 <- colMeans(alpha_est_30_500_7575) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_30_500_7575 <- var(alpha_est_30_500_7575[,1]) # Variance of alpha_0 estimates.
+var_alpha1_30_500_7575 <- var(alpha_est_30_500_7575[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_30_500_7575 <- mean((alpha_est_30_500_7575[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_30_500_7575 <- mean((alpha_est_30_500_7575[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_30_500_7575
+var_alpha0_30_500_7575
+var_alpha1_30_500_7575
+msqe_alpha0_30_500_7575
+msqe_alpha1_30_500_7575
 
 ## SIZE 1000 DATASETS ESTIMATES, S = 30:
 
@@ -131,29 +191,91 @@ alpha_gmm_minimizer_30_1000 = function(param, col_index) {
 }
 
 # Optimizing with respect to (alpha_0, alpha_1) for each of the 100 size-1000 datasets
-# generated in (b), for S = 30: 
-results_30_1000 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+# generated in (b), for S = 30... 
+
+# 1) With initial guess (0, 0), using BFGS: 
+
+results_30_1000_00 = future_map(1:100, ~ optim(c(0, 0), 
                                             alpha_gmm_minimizer_30_1000, col_index = .x,
                                             method = 'BFGS',
                                             control = list('maxit' = '1000')),
                                             .options = furrr_options(seed = T))
 
 # Checking convergence status: 
-convergence_30_1000 = purrr::map(1:100, ~ results_30_1000[[.x]]$convergence)
+convergence_30_1000_00 = purrr::map(1:100, ~ results_30_1000_00[[.x]]$convergence)
 
 # Results:
-alpha_est_30_1000 = t(matrix(unlist(purrr::map(1:100, ~ results_30_1000[[.x]]$par)), nrow = 2))
+alpha_est_30_1000_00 = t(matrix(unlist(purrr::map(1:100, ~ results_30_1000_00[[.x]]$par)), nrow = 2))
 
-colMeans(alpha_est_30_1000) # Mean of alpha_0 and alpha_1 estimates, respectively.
-var(alpha_est_30_1000[,1]) # Variance of alpha_0 estimates.
-var(alpha_est_30_1000[,2]) # Variance of alpha_1 estimates. 
+means_30_1000_00 <- colMeans(alpha_est_30_1000_00) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_30_1000_00 <- var(alpha_est_30_1000_00[,1]) # Variance of alpha_0 estimates.
+var_alpha1_30_1000_00 <- var(alpha_est_30_1000_00[,2]) # Variance of alpha_1 estimates. 
+msqe_alpha0_30_1000_00 <- mean((alpha_est_30_1000_00[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_30_1000_00 <- mean((alpha_est_30_1000_00[,2]-0.7)^2) # MSQE of alpha_1 estimates.
 
-mean((alpha_est_30_1000[,1]-0.8)^2) # MSQE of alpha_0 estimates.
-mean((alpha_est_30_1000[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+means_30_1000_00
+var_alpha0_30_1000_00
+var_alpha1_30_1000_00
+msqe_alpha0_30_1000_00
+msqe_alpha1_30_1000_00
+
+# 2) With initial guess (0.5, 0.5), using BFGS: 
+
+results_30_1000_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+                                               alpha_gmm_minimizer_30_1000, col_index = .x,
+                                               method = 'BFGS',
+                                               control = list('maxit' = '1000')),
+                                .options = furrr_options(seed = T))
+
+# Checking convergence status: 
+convergence_30_1000_55 = purrr::map(1:100, ~ results_30_1000_55[[.x]]$convergence)
+
+# Results:
+alpha_est_30_1000_55 = t(matrix(unlist(purrr::map(1:100, ~ results_30_1000_55[[.x]]$par)), nrow = 2))
+
+means_30_1000_55 <- colMeans(alpha_est_30_1000_55) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_30_1000_55 <- var(alpha_est_30_1000_55[,1]) # Variance of alpha_0 estimates.
+var_alpha1_30_1000_55 <- var(alpha_est_30_1000_55[,2]) # Variance of alpha_1 estimates. 
+
+msqe_alpha0_30_1000_55 <- mean((alpha_est_30_1000_55[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_30_1000_55 <- mean((alpha_est_30_1000_55[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_30_1000_55
+var_alpha0_30_1000_55
+var_alpha1_30_1000_55
+msqe_alpha0_30_1000_55
+msqe_alpha1_30_1000_55
+
+# 3) With initial guess (0.75, 0.75), using BFGS: 
+
+results_30_1000_7575 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+                                               alpha_gmm_minimizer_30_1000, col_index = .x,
+                                               method = 'BFGS',
+                                               control = list('maxit' = '1000')),
+                                .options = furrr_options(seed = T))
+
+# Checking convergence status: 
+convergence_30_1000_7575 = purrr::map(1:100, ~ results_30_1000_7575[[.x]]$convergence)
+
+# Results:
+alpha_est_30_1000_7575 = t(matrix(unlist(purrr::map(1:100, ~ results_30_1000_7575[[.x]]$par)), nrow = 2))
+
+means_30_1000_7575 <- colMeans(alpha_est_30_1000_7575) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_30_1000_7575 <- var(alpha_est_30_1000_7575[,1]) # Variance of alpha_0 estimates.
+var_alpha1_30_1000_7575 <- var(alpha_est_30_1000_7575[,2]) # Variance of alpha_1 estimates. 
+
+msqe_alpha0_30_1000_7575 <- mean((alpha_est_30_1000_7575[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_30_1000_7575 <- mean((alpha_est_30_1000_7575[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_30_1000_7575
+var_alpha0_30_1000_7575
+var_alpha1_30_1000_7575
+msqe_alpha0_30_1000_7575
+msqe_alpha1_30_1000_7575
 
 ### (d)
 
-## SIZE 500 DATASETS ESTIMATES, S = 100:
+### SIZE 500 DATASETS ESTIMATES, S = 100:
 
 # Defining the SMM estimator function for datasets of size 500, with S = 100.
 alpha_gmm_minimizer_100_500 = function(param, col_index) {
@@ -175,27 +297,84 @@ alpha_gmm_minimizer_100_500 = function(param, col_index) {
 }
 
 # Optimizing with respect to (alpha_0, alpha_1) for each of the 100 size-500 datasets
-# generated in (b), for S = 100: 
-results_100_500 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+# generated in (b), for S = 100... 
+
+# 1) With initial guess (0, 0), using BFGS: 
+results_100_500_00 = future_map(1:100, ~ optim(c(0, 0), 
                                           alpha_gmm_minimizer_100_500, col_index = .x,
                                           method = 'BFGS',
                                           control = list('maxit' = '1000')),
                                           .options = furrr_options(seed = T))
 
 # Checking convergence status:
-convergence_100_500 = purrr::map(1:100, ~ results_100_500[[.x]]$convergence)
+convergence_100_500_00 = purrr::map(1:100, ~ results_100_500_00[[.x]]$convergence)
 
 # Results: 
-alpha_est_100_500 = t(matrix(unlist(purrr::map(1:100, ~ results_100_500[[.x]]$par)), nrow = 2))
+alpha_est_100_500_00 = t(matrix(unlist(purrr::map(1:100, ~ results_100_500_00[[.x]]$par)), nrow = 2))
 
-colMeans(alpha_est_100_500) # Mean of alpha_0 and alpha_1 estimates, respectively.
-var(alpha_est_100_500[,1]) # Variance of alpha_0 estimates.
-var(alpha_est_100_500[,2]) # Variance of alpha_1 estimates.
+means_100_500_00 <- colMeans(alpha_est_100_500_00) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_100_500_00 <- var(alpha_est_100_500_00[,1]) # Variance of alpha_0 estimates.
+var_alpha1_100_500_00 <- var(alpha_est_100_500_00[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_100_500_00 <- mean((alpha_est_100_500_00[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_100_500_00 <- mean((alpha_est_100_500_00[,2]-0.7)^2) # MSQE of alpha_1 estimates.
 
-mean((alpha_est_100_500[,1]-0.8)^2) # MSQE of alpha_0 estimates.
-mean((alpha_est_100_500[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+means_100_500_00
+var_alpha0_100_500_00
+var_alpha1_100_500_00
+msqe_alpha0_100_500_00
+msqe_alpha1_100_500_00
 
-## SIZE 1000 DATASETS ESTIMATES, S = 100:
+# 2) With initial guess (0.5, 0.5), using BFGS:
+results_100_500_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+                                            alpha_gmm_minimizer_100_500, col_index = .x,
+                                            method = 'BFGS',
+                                            control = list('maxit' = '1000')),
+                             .options = furrr_options(seed = T))
+
+# Checking convergence status:
+convergence_100_500_55 = purrr::map(1:100, ~ results_100_500_55[[.x]]$convergence)
+
+# Results: 
+alpha_est_100_500_55 = t(matrix(unlist(purrr::map(1:100, ~ results_100_500_55[[.x]]$par)), nrow = 2))
+
+means_100_500_55 <- colMeans(alpha_est_100_500_55) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_100_500_55 <- var(alpha_est_100_500_55[,1]) # Variance of alpha_0 estimates.
+var_alpha1_100_500_55 <- var(alpha_est_100_500_55[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_100_500_55 <- mean((alpha_est_100_500_55[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_100_500_55 <- mean((alpha_est_100_500_55[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_100_500_55
+var_alpha0_100_500_55
+var_alpha1_100_500_55
+msqe_alpha0_100_500_55
+msqe_alpha1_100_500_55
+
+# 3) With initial guess (0.75, 0.75), using BFGS:
+results_100_500_75 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+                                               alpha_gmm_minimizer_100_500, col_index = .x,
+                                               method = 'BFGS',
+                                               control = list('maxit' = '1000')),
+                                .options = furrr_options(seed = T))
+
+# Checking convergence status:
+convergence_100_500_75 = purrr::map(1:100, ~ results_100_500_75[[.x]]$convergence)
+
+# Results: 
+alpha_est_100_500_75 = t(matrix(unlist(purrr::map(1:100, ~ results_100_500_75[[.x]]$par)), nrow = 2))
+
+means_100_500_75 <- colMeans(alpha_est_100_500_75) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_100_500_75 <- var(alpha_est_100_500_75[,1]) # Variance of alpha_0 estimates.
+var_alpha1_100_500_75 <- var(alpha_est_100_500_75[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_100_500_75 <- mean((alpha_est_100_500_75[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_100_500_75 <- mean((alpha_est_100_500_75[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_100_500_75
+var_alpha0_100_500_75
+var_alpha1_100_500_75
+msqe_alpha0_100_500_75
+msqe_alpha1_100_500_75
+
+### SIZE 1000 DATASETS ESTIMATES, S = 100:
 
 # Defining the SMM estimator function for datasets of size 1000, with S = 100.
 alpha_gmm_minimizer_100_1000 = function(param, col_index) {
@@ -217,25 +396,84 @@ alpha_gmm_minimizer_100_1000 = function(param, col_index) {
 }
 
 # Optimizing with respect to (alpha_0, alpha_1) for each of the 100 size-1000 datasets
-# generated in (b), for S = 100:
-results_100_1000 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+# generated in (b), for S = 100...
+
+# 1) With initial guess (0, 0), using BFGS:
+
+results_100_1000_00 = future_map(1:100, ~ optim(c(0, 0), 
                                           alpha_gmm_minimizer_100_1000, col_index = .x,
                                           method = 'BFGS',
                                           control = list('maxit' = '1000')), 
                                           .options = furrr_options(seed = T))
 
 # Checking convergence status:
-convergence_100_1000 = purrr::map(1:100, ~ results_100_1000[[.x]]$convergence)
+convergence_100_1000_00 = purrr::map(1:100, ~ results_100_1000[[.x]]$convergence)
 
 # Results: 
-alpha_est_100_1000 = t(matrix(unlist(purrr::map(1:100, ~ results_100_1000[[.x]]$par)), nrow = 2))
+alpha_est_100_1000_00 = t(matrix(unlist(purrr::map(1:100, ~ results_100_1000_00[[.x]]$par)), nrow = 2))
 
-colMeans(alpha_est_100_1000) # Mean of alpha_0 and alpha_1 estimates, respectively.
-var(alpha_est_100_1000[,1]) # Variance of alpha_0 estimates.
-var(alpha_est_100_1000[,2]) # Variance of alpha_1 estimates.
+means_100_1000_00 <- colMeans(alpha_est_100_1000_00) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_100_1000_00 <- var(alpha_est_100_1000_00[,1]) # Variance of alpha_0 estimates.
+var_alpha1_100_1000_00 <- var(alpha_est_100_1000_00[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_100_1000_00 <- mean((alpha_est_100_1000_00[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_100_1000_00 <- mean((alpha_est_100_1000_00[,2]-0.7)^2) # MSQE of alpha_1 estimates.
 
-mean((alpha_est_100_1000[,1]-0.8)^2) # MSQE of alpha_0 estimates.
-mean((alpha_est_100_1000[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+means_100_1000_00
+var_alpha0_100_1000_00
+var_alpha1_100_1000_00
+msqe_alpha0_100_1000_00
+msqe_alpha1_100_1000_00
 
+# 2) With initial guess (0.5, 0.5), using BFGS:
+
+results_100_1000_55 = future_map(1:100, ~ optim(c(0.5, 0.5), 
+                                                alpha_gmm_minimizer_100_1000, col_index = .x,
+                                                method = 'BFGS',
+                                                control = list('maxit' = '1000')), 
+                                 .options = furrr_options(seed = T))
+
+# Checking convergence status:
+convergence_100_1000_55 = purrr::map(1:100, ~ results_100_1000_55[[.x]]$convergence)
+
+# Results: 
+alpha_est_100_1000_55 = t(matrix(unlist(purrr::map(1:100, ~ results_100_1000_55[[.x]]$par)), nrow = 2))
+
+means_100_1000_55 <- colMeans(alpha_est_100_1000_55) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_100_1000_55 <- var(alpha_est_100_1000_55[,1]) # Variance of alpha_0 estimates.
+var_alpha1_100_1000_55 <- var(alpha_est_100_1000_55[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_100_1000_55 <- mean((alpha_est_100_1000_55[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_100_1000_55 <- mean((alpha_est_100_1000_55[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_100_1000_55
+var_alpha0_100_1000_55
+var_alpha1_100_1000_55
+msqe_alpha0_100_1000_55
+msqe_alpha1_100_1000_55
+
+# 3) With initial guess (0.75, 0.75), using BFGS:
+
+results_100_1000_7575 = future_map(1:100, ~ optim(c(0.75, 0.75), 
+                                                alpha_gmm_minimizer_100_1000, col_index = .x,
+                                                method = 'BFGS',
+                                                control = list('maxit' = '1000')), 
+                                 .options = furrr_options(seed = T))
+
+# Checking convergence status:
+convergence_100_1000_7575 = purrr::map(1:100, ~ results_100_1000_7575[[.x]]$convergence)
+
+# Results: 
+alpha_est_100_1000_7575 = t(matrix(unlist(purrr::map(1:100, ~ results_100_1000_7575[[.x]]$par)), nrow = 2))
+
+means_100_1000_7575 <- colMeans(alpha_est_100_1000_7575) # Mean of alpha_0 and alpha_1 estimates, respectively.
+var_alpha0_100_1000_7575 <- var(alpha_est_100_1000_7575[,1]) # Variance of alpha_0 estimates.
+var_alpha1_100_1000_7575 <- var(alpha_est_100_1000_7575[,2]) # Variance of alpha_1 estimates.
+msqe_alpha0_100_1000_7575 <- mean((alpha_est_100_1000_7575[,1]-0.8)^2) # MSQE of alpha_0 estimates.
+msqe_alpha1_100_1000_7575 <- mean((alpha_est_100_1000_7575[,2]-0.7)^2) # MSQE of alpha_1 estimates.
+
+means_100_1000_7575
+var_alpha0_100_1000_7575
+var_alpha1_100_1000_7575
+msqe_alpha0_100_1000_7575
+msqe_alpha1_100_1000_7575
 
 ### The End.
