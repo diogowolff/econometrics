@@ -178,23 +178,28 @@ theta_estimator = function(x, y, bandwidth) {
 }
 
 # Estimating alpha:
-alp_rdd = (theta_estimator(data_under$xnorm, data_under$y, 15) -
+alp_rdd_15 = (theta_estimator(data_under$xnorm, data_under$y, 15) -
   theta_estimator(data_over$xnorm, data_over$y, 15))[1]
 
-alp_rdd
+alp_rdd_30 = (theta_estimator(data_under$xnorm, data_under$y, 30) -
+                theta_estimator(data_over$xnorm, data_over$y, 30))[1]
 
-# Computing alpha estimators for bandwiths (h) running from 10 to 35
-alpha_robustness = map_dbl(15:35, ~ (theta_estimator(data_under$xnorm, data_under$y, .x) -
+alp_rdd # h = 15
+alp_rdd_30 # h = 30
+
+
+# Computing alpha estimators for bandwiths (h) running from 15 to 30
+alpha_robustness = map_dbl(15:30, ~ (theta_estimator(data_under$xnorm, data_under$y, .x) -
                                    theta_estimator(data_over$xnorm, data_over$y, .x))[1])
 
 alpha_robustness
 
-ggplot(data.frame("bandwith" = 15:35, "alpha_rdd" = alpha_robustness), aes(x = bandwith, y = alpha_rdd)) + 
+ggplot(data.frame("bandwith" = 15:30, "alpha_rdd" = alpha_robustness), aes(x = bandwith, y = alpha_rdd)) + 
   geom_point(size=3) +
   geom_line(size=1, alpha=0.3) +
   theme_bw() + scale_color_brewer(palette="Paired") + 
   xlab("Bandwidth (h)") +
   ylab("Kernel RDD estimate (alpha_RDD)") +
-  ggtitle("Triangular Kernel RDD estimates as bandwidth (h) varies from 15 to 35")
+  ggtitle("Triangular Kernel RDD estimates as bandwidth (h) varies from 15 to 30")
 
 

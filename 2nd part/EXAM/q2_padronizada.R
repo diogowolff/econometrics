@@ -472,6 +472,9 @@ msqe_alpha1_100_1000_7575
 
 
 
+
+
+# Graphs 
 alpha_gmm_given_est_alpha1 = function(param, col_index) {
   sim_eps0 = rgumbel(100*1000)
   sim_eps1 = rgumbel(100*1000)
