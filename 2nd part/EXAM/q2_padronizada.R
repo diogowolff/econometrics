@@ -34,6 +34,22 @@ eps1_mat_1000 = matrix(rgumbel(100*1000), nrow = 1000)
 Y_mat_500 = ifelse(0.8 + 0.7*X_mat_500 + eps1_mat_500 >= eps0_mat_500, 1, 0)
 Y_mat_1000 = ifelse(0.8 + 0.7*X_mat_1000 + eps1_mat_1000 >= eps0_mat_1000, 1, 0)
 
+# Generating the requested datasets:
+datasets_500 <- list()
+for (i in 1:100) {
+datasets_500[[i]] <- data.frame("x" = X_mat_500[,i], "d" = Y_mat_500[,i])
+}
+
+# 100 datasets with 500 generated observations of x and d, as requested:
+View(datasets_500)
+
+datasets_1000 <- list()
+for (i in 1:100) {
+datasets_1000[[i]] <- data.frame("x" = X_mat_1000[,i], "d" = Y_mat_1000[,i])
+}
+
+# 100 datasets with 1000 generated observations of x and d, as requested:
+View(datasets_1000)
 
 ### (c)
 
