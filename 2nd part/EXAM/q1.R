@@ -170,7 +170,7 @@ theta_estimator = function(x, y, bandwidth) {
   K_vec = kernel_calculator(x, bandwidth)
   
   lh_mat = matrix(c(sum(K_vec), sum(K_vec*x), sum(K_vec*x), 
-                    sum((K_vec*(x)^2)^2)), nrow = 2)
+                    sum(K_vec*(x)^2)), nrow = 2)
   
   rh_vec = c(sum(K_vec*y), sum(K_vec*y*x))
   
@@ -197,5 +197,4 @@ ggplot(data.frame("bandwith" = 15:35, "alpha_rdd" = alpha_robustness), aes(x = b
   ylab("Kernel RDD estimate (alpha_RDD)") +
   ggtitle("Triangular Kernel RDD estimates as bandwidth (h) varies from 15 to 35")
 
-plot(10:35, alpha_robustness)
 
