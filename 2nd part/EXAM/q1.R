@@ -43,6 +43,20 @@ ggplot(data.frame(df$xnorm, quad_fit), aes(x = df.xnorm, y = quad_fit)) +
   ylab("Scholl enrollment status (Y)") +
   ggtitle("RDD fitted values, quadratic specification with full polynomial")
 
+ggplot(data.frame(df$xnorm, quad_fit), aes(x = df.xnorm, y = quad_fit)) + 
+  geom_point(alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="red") +
+  geom_segment(aes(x = 0, xend = 0, y = quad_cons + confint(quad_reg)[2,1], 
+                   yend = quad_cons + confint(quad_reg)[2,2])) +
+  geom_segment(aes(x=-1, xend=1, y=quad_cons + confint(quad_reg)[2,1],
+                   yend = quad_cons + confint(quad_reg)[2,1])) +
+  geom_segment(aes(x=-1, xend=1, y=quad_cons + confint(quad_reg)[2,2],
+                   yend = quad_cons + confint(quad_reg)[2,2])) +
+  theme_bw() + scale_color_brewer(palette="Paired") + 
+  xlab("Elegibility (xnorm, elegible if <= 0)") +
+  ylab("Scholl enrollment status (Y)") +
+  ggtitle("RDD fitted values, quadratic specification with full polynomial")
+
 # Plotting (using xbin in the x-axis): 
 ggplot(data.frame(df$xbin, quad_fit), aes(x = df.xbin, y = quad_fit)) + 
   geom_point(alpha = 0.2) +
@@ -66,6 +80,20 @@ ggplot(data.frame(df$xnorm, cub_fit), aes(x = df.xnorm, y = cub_fit)) +
   geom_vline(xintercept = 0, linetype = 'dashed', size=1, color="red") + 
   geom_hline(yintercept = cub_cons, linetype = 'dashed', size=0.5, color="black", alpha=0.3) +
   geom_hline(yintercept = cub_cons + cub_alpha_rdd, linetype = 'dashed', size=0.5, color="black", alpha=0.3) +
+  theme_bw() + scale_color_brewer(palette="Paired") + 
+  xlab("Elegibility (xnorm, elegible if <= 0)") +
+  ylab("Scholl enrollment status (Y)") +
+  ggtitle("RDD fitted values, cubic specification with full polynomial")
+  
+ggplot(data.frame(df$xnorm, cub_fit), aes(x = df.xnorm, y = cub_fit)) + 
+  geom_point(alpha = 0.2)  +
+  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="red") +
+  geom_segment(aes(x = 0, xend = 0, y = cub_cons + confint(cub_reg)[2,1], 
+                   yend = cub_cons + confint(cub_reg)[2,2])) +
+  geom_segment(aes(x=-1, xend=1, y=cub_cons + confint(cub_reg)[2,1],
+                   yend = cub_cons + confint(cub_reg)[2,1])) +
+  geom_segment(aes(x=-1, xend=1, y=cub_cons + confint(cub_reg)[2,2],
+                   yend = cub_cons + confint(cub_reg)[2,2])) +
   theme_bw() + scale_color_brewer(palette="Paired") + 
   xlab("Elegibility (xnorm, elegible if <= 0)") +
   ylab("Scholl enrollment status (Y)") +
@@ -95,6 +123,20 @@ ggplot(data.frame(df$xnorm, quar_fit), aes(x = df.xnorm, y = quar_fit)) +
   geom_vline(xintercept = 0, linetype = 'dashed', size=1, color="red") + 
   geom_hline(yintercept = quar_cons, linetype = 'dashed', size=0.5, color="black", alpha=0.3) +
   geom_hline(yintercept = quar_cons + quar_alpha_rdd, linetype = 'dashed', size=0.5, color="black", alpha=0.3) +
+  theme_bw() + scale_color_brewer(palette="Paired") + 
+  xlab("Elegibility (xnorm, elegible if <= 0)") +
+  ylab("Scholl enrollment status (Y)") +
+  ggtitle("RDD fitted values, quartic specification with full polynomial")
+  
+ggplot(data.frame(df$xnorm, quar_fit), aes(x = df.xnorm, y = quar_fit)) + 
+  geom_point(alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = 'dashed', size=.1, color="red") +
+  geom_segment(aes(x = 0, xend = 0, y = quar_cons + confint(quar_reg)[2,1], 
+                                            yend = quar_cons + confint(quar_reg)[2,2])) +
+  geom_segment(aes(x=-1, xend=1, y=quar_cons + confint(quar_reg)[2,1],
+                   yend = quar_cons + confint(quar_reg)[2,1])) +
+  geom_segment(aes(x=-1, xend=1, y=quar_cons + confint(quar_reg)[2,2],
+                   yend = quar_cons + confint(quar_reg)[2,2])) +
   theme_bw() + scale_color_brewer(palette="Paired") + 
   xlab("Elegibility (xnorm, elegible if <= 0)") +
   ylab("Scholl enrollment status (Y)") +
