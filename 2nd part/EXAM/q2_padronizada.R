@@ -474,7 +474,7 @@ msqe_alpha1_100_1000_7575
 
 
 
-# Graphs 
+# Graphs of bootstrap estimations of SMM values given the last estimation
 alpha_gmm_given_est_alpha1 = function(param, col_index) {
   sim_eps0 = rgumbel(100*1000)
   sim_eps1 = rgumbel(100*1000)
@@ -505,7 +505,7 @@ inner_map_alpha1 = function(param) {
   mean(map_dbl(1:100, ~ alpha_gmm_given_est_alpha1(param, .x)))
 } 
 
-graph_data_alpha1 = map_dbl(seq(0.6, .9, 0.005), inner_map_alpha1)
+graph_data_alpha1 = replicate(100, map_dbl(seq(0.1, 1.2, 0.05), inner_map_alpha1))
 
 alpha_gmm_given_est_alpha0 = function(param, col_index) {
   sim_eps0 = rgumbel(100*1000)
@@ -537,18 +537,53 @@ inner_map_alpha0 = function(param) {
   mean(map_dbl(1:100, ~ alpha_gmm_given_est_alpha0(param, .x)))
 } 
 
-graph_data_alpha0 = map_dbl(seq(0.6, .9, 0.005), inner_map_alpha0)
+graph_data_alpha0 = replicate(100, map_dbl(seq(0.6, .9, 0.025), inner_map_alpha0))
 
 library(ggplot2)
 library(dplyr)
 
 
-data.frame('Constant' = seq(0.6, .9, 0.005), 'SMM Value' = graph_data_alpha1, check.names = FALSE) %>%
-  ggplot(aes(x = Constant, y = `SMM Value`)) + geom_line()
+data.frame('Constant' = seq(0.1, 1.2, 0.05), 'upper' = apply(t(graph_data_alpha1), 2, max), 
+           'lower' = apply(t(graph_data_alpha1), 2, min),
+           'middle' = apply(t(graph_data_alpha1), 2, mean),
+           check.names = FALSE) %>%
+  ggplot(aes(x = Constant, y = middle)) + geom_line()+ 
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.2)
 
-data.frame('Constant' = seq(0.6, .9, 0.005), 'SMM Value' = graph_data_alpha0, check.names = FALSE) %>%
-  ggplot(aes(x = Constant, y = `SMM Value`)) + geom_line()
+data.frame('Constant' = seq(0.6, .9, 0.025), 'upper' = apply(t(graph_data_alpha0), 2, max), 
+           'lower' = apply(t(graph_data_alpha0), 2, min),
+           'middle' = apply(t(graph_data_alpha0), 2, mean),
+           check.names = FALSE) %>%
+  ggplot(aes(x = Constant, y = middle)) + geom_line()+ 
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.2)
 
 
+# Graph of sensitivity: plotting the estimated parameter for S=100 and n=1000 given the starting position
+# in a grid
 
-save.image(file='data_q2.RData')
+set.seed('2112')
+
+estimator_with_100_sims = function(param) {
+  results_100_1000 = map(1:100, ~ optim(param, alpha_gmm_minimizer_100_1000, col_index = .x,
+                                              method = 'BFGS',
+                                              control = list('maxit' = '1000')))
+  
+  convergence_100_1000 = purrr::map(1:100, ~ results_100_1000[[.x]]$convergence)
+  
+  alpha_est_100_1000 = t(matrix(unlist(purrr::map(1:100, ~ results_100_1000[[.x]]$par)), nrow = 2))
+  
+  return(c(colMeans(alpha_est_100_1000)))
+}
+
+end_locations = purrr::map2(expand.grid(a0 = seq(0.6, 1, .02), a1 = seq(.5, .9, .02))[,1],
+                            expand.grid(a0 = seq(0.6, 1, .02), a1 = seq(.5, .9, .02))[,2],
+                            ~ estimator_with_100_sims(c(.x, .y)))
+
+df = cbind(expand.grid(a0 = seq(0.6, 1, .02), a1 = seq(.5, .9, .02)), 
+           t(matrix(unlist(end_locations), nrow = 3))) %>%
+  rename(xend = `1`, yend = `2`)
+
+
+ggplot(df) + geom_segment(aes(x=a0, y = a1, xend=xend, yend = yend),
+                          arrow = arrow(length = unit(0.1, "cm"))) +
+  xlim(0.5, 1) + ylim(0.5, 1) 
