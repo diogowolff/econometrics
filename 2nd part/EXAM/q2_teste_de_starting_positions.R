@@ -4,21 +4,23 @@ library(evd)
 library(furrr)
 library(ggplot2)
 
-X_mat_1000 = matrix(rlnorm(100*1000, log(25/sqrt(25+3)), log(1+3/25)), nrow = 1000)
+plan(multisession)
 
-eps0_mat_1000 = matrix(rgumbel(100*1000), nrow = 1000)
-eps1_mat_1000 = matrix(rgumbel(100*1000), nrow = 1000)
+X_mat_500 = matrix(rlnorm(100*500, log(25/sqrt(25+3)), log(1+3/25)), nrow = 500)
 
-Y_mat_1000 = ifelse(0.8 + 0.7*X_mat_1000 + eps1_mat_1000 >= eps0_mat_1000, 1, 0)
+eps0_mat_1000 = matrix(rgumbel(100*500), nrow = 500)
+eps1_mat_1000 = matrix(rgumbel(100*500), nrow = 500)
+
+Y_mat_1000 = ifelse(0.8 + 0.7*X_mat_500 + eps1_mat_1000 >= eps0_mat_1000, 1, 0)
 
 data_y_mean_1000 = colMeans(Y_mat_1000)
 data_cov_1000 = mapply(function(x, y){cov(x, y)}, as.data.frame(Y_mat_1000), 
-                       as.data.frame(X_mat_1000))
+                       as.data.frame(X_mat_500))
 
 alpha_gmm_minimizer_20_1000 = function(param, col_index) {
-  data_x = matrix(rep(X_mat_1000[, col_index], 20), nrow = 1000)
-  sim_eps0 = matrix(rgumbel(20*1000), nrow = 1000)
-  sim_eps1 = matrix(rgumbel(20*1000), nrow = 1000)
+  data_x = matrix(rep(X_mat_500[, col_index], 30), nrow = 500)
+  sim_eps0 = matrix(rgumbel(30*500), nrow = 500)
+  sim_eps1 = matrix(rgumbel(30*500), nrow = 500)
   
   estimated_choice = ifelse(param[1] + param[2]*data_x + sim_eps0 >= sim_eps1, 1, 0)
   
@@ -46,7 +48,6 @@ alpha_gmm_minimizer_20_1000 = function(param, col_index) {
 
 estimator_with_20_sims = function(param) {
   results_20_1000 = future_map(1:100, ~ optim(param, alpha_gmm_minimizer_20_1000, col_index = .x,
-                                               method = 'BFGS',
                                                control = list('maxit' = '1000')), 
                                 .options = furrr_options(seed = T))
   
